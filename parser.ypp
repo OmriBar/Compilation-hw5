@@ -1,0 +1,163 @@
+%{
+	#include "attributes.h"
+    #include "SymbolTable.h"
+    #include "SemanticActions.h"
+    #include "output.hpp"
+	#include <iostream>
+	#include <stdlib.h>
+	using namespace std;
+
+	extern int yylex();
+    extern int yylineno;
+	extern int yyerror(char const*);
+
+    SymbolTable globalSymbolTable;
+    int in_while_flag;
+    bool main_flag = false;
+%}
+
+%token VOID
+%token INT
+%token BYTE
+%token B
+%token BOOL
+%left AND
+%left OR
+%right NOT
+%token TRUE
+%token FALSE
+%token RETURN
+%token IF
+
+%nonassoc "then"
+%nonassoc ELSE
+
+%token WHILE
+%token BREAK
+%token CONTINUE
+%token PRECOND
+%token SC
+%token COMMA
+%right LPAREN RPAREN
+%right LBRACE RBRACE
+%left ASSIGN
+%nonassoc  RELOP
+%left  BINOP
+%token ID
+%token NUM
+%token STRING
+%token COMMENT
+%token ENDFILE
+
+
+%%
+
+Program  : 
+    Funcs ENDFILE {mainCheck(globalSymbolTable); CallToExitGlobalScope(globalSymbolTable); return 0;}
+;
+Funcs : 
+    /*epsilon*/ | FuncDecl Funcs | COMMENT Funcs
+;
+FuncDecl :
+    RetType ID  
+                {CallToEnterFunctionScope(globalSymbolTable);}
+    LPAREN
+        Formals 
+    RPAREN 
+        PreConditions 
+                {addFunction(globalSymbolTable,$1,$2,$3,$4,$5,$6,$7);}
+      LBRACE
+        Statements 
+      RBRACE 
+                {CallToExitFunctionScope(globalSymbolTable);}
+;
+
+
+RetType : 
+    Type {$$ = RetTypeAction1($1);} | 
+    VOID {$$ = RetTypeAction2();}
+;
+Formals : 
+    /*epsilon*/ { $$ = FormalsAction1();}                                        | 
+    FormalsList { $$ = FormalsAction2($1);}
+;
+FormalsList : 
+    FormalDecl {$$ = FormalsListAction1($1);} | FormalDecl COMMA FormalsList {$$ = FormalsListAction2($1,$2,$3);}
+;
+FormalDecl : 
+    Type ID { $$ = FormalDeclAction1(globalSymbolTable,$1,$2); }
+;
+PreConditions : 
+    /*epsilon*/                { $$ = PreConditionsAction1();}                   |
+    PreConditions PreCondition { $$ = PreConditionsAction2($1,$2);} 
+;
+PreCondition : 
+	PRECOND LPAREN Exp RPAREN { PreConditionAction1($1,$2,$3,$4);}
+;
+Statements : 
+    Statement | Statements Statement // dont need to do anything right now
+;
+Statement : 
+    COMMENT                                                                                                                                 |
+    LBRACE {CallToEnterInnerScope(globalSymbolTable);} Statements {CallToExitInnerScope(globalSymbolTable);} RBRACE                         | 
+    Type ID SC               {StatmentAction1(globalSymbolTable,$1,$2,$3);}                                                                 | 
+    Type ID ASSIGN Exp SC    {StatmentAction2(globalSymbolTable ,$1,$2,$3,$4,$5);}                                                          | 
+    ID ASSIGN Exp SC         {StatmentAction3(globalSymbolTable,$1,$2,$3,$4);}                                                              | 
+    IF_SUFFIX  %prec "then"                                                                                                                 |
+    IF_SUFFIX ELSE {CallToEnterInnerScope(globalSymbolTable);} Statement {CallToExitInnerScope(globalSymbolTable);}                         |
+    WHILE LPAREN {CallToEnterInnerScope(globalSymbolTable); EnterWhile(in_while_flag);} Exp {checkIfBoolInWhileIf($4);} RPAREN Statement
+             {CallToExitInnerScope(globalSymbolTable);ExitWhile(in_while_flag);}                                                            |
+    BREAK SC                 {StatmentAction4(in_while_flag);}                                                                              |
+    CONTINUE SC              {StatmentAction5(in_while_flag);}                                                                              |
+    RETURN SC                {StatmentAction6(globalSymbolTable);}                                                                          |
+    RETURN Exp SC            {StatmentAction7(globalSymbolTable,$1,$2);}                                                                    |
+    Call SC
+;
+
+IF_SUFFIX : IF LPAREN {CallToEnterInnerScope(globalSymbolTable);} Exp {checkIfBoolInWhileIf($4);} RPAREN Statement {CallToExitInnerScope(globalSymbolTable);} // solves a reduce-reduce conflict!
+;
+
+Call : 
+    ID LPAREN ExpList RPAREN { $$ = CallAction1(globalSymbolTable,$1,$2,$3,$4); }                                |
+    ID LPAREN RPAREN         { $$ = CallAction2(globalSymbolTable,$1,$2,$3);    }
+;
+ExpList :
+    Exp COMMA ExpList { $$ = ExpListAction1($1,$2,$3);}                        | 
+    Exp               { $$ = ExpListAction2($1);}
+;
+Type :
+    INT     { $$ = TypeAction1();}  |
+    BYTE    { $$ = TypeAction2(); } |
+    BOOL    { $$ = TypeAction3(); }
+;
+Exp : 
+    LPAREN Exp RPAREN   { $$ = ExpAction1($1,$2,$3);}                     |
+    Exp BINOP Exp       { $$ = ExpAction2($1,$2,$3);}                    |
+    ID                  { $$ = ExpAction3(globalSymbolTable,$1);}        |
+    Call                { $$ = ExpAction4($1); }                         |  
+    NUM                 { $$ = ExpAction5($1); }                         |
+    NUM B               { $$ = ExpAction6($1,$2); }                      |
+    STRING              { $$ = ExpAction7(); }                           |
+    TRUE                { $$ = ExpAction8(); }                           |
+    FALSE               { $$ = ExpAction9(); }                           |
+	Exp AND Exp         { $$ = ExpAction10($1,$2,$3); }                  |
+    Exp OR Exp          { $$ = ExpAction11($1,$2,$3); }                  |
+    Exp RELOP Exp       { $$ = ExpAction12($1,$2,$3); }                  |
+    NOT Exp             { $$ = ExpAction13($1,$2); } 
+
+    
+;
+
+%%
+
+int main()
+{
+    globalSymbolTable = SymbolTable();
+    in_while_flag = 0;
+	if(yyparse() != 0){
+        if(!(globalSymbolTable.IsMainExists())){
+            output::errorMainMissing();
+        }
+    }
+}
+
