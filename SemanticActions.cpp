@@ -1,6 +1,8 @@
 #include "SemanticActions.h"
 #include "output.hpp"
 #include <stdlib.h> 
+#include "RegManagment.h"
+
 // RetType -> TYPE 
 
 Node * RetTypeAction1(Node * node1){
@@ -213,7 +215,7 @@ bool AreParaListsEqual(std::list<TypeNameEnum> list1 , std::list<TypeNameEnum> l
 
 // Call -> ID LPAREN ExpList RPAREN
 
-Node* CallAction1(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3 , Node* node4){
+Node* CallAction1(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3 , Node* node4 , RegManagment regManagment){
     Symbol * sym = symTable.GetSymbol((dynamic_cast<IdVal*>(node1))->IdStr);
     if(sym == NULL || sym->GetType() != TYPE_FUNC ){
         output::errorUndefFunc(yylineno,(dynamic_cast<IdVal*>(node1))->IdStr);
@@ -240,12 +242,12 @@ Node* CallAction1(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node
         //yyerror("error!");
     }
     FunctionSymbol* funcSym = dynamic_cast<FunctionSymbol*>(sym);
-    return TypeNameToExp(funcSym->GetRetType());
+    return TypeNameToExp(funcSym->GetRetType(),regManagment.AllocateReg());
 }
 
 // Call -> ID LPAREN RPAREN
 
-Node* CallAction2(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3){
+Node* CallAction2(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3 , RegManagment regManagment){
     Symbol * sym = symTable.GetSymbol((dynamic_cast<IdVal*>(node1))->IdStr);
     if(sym == NULL || sym->GetType() != TYPE_FUNC ){
         output::errorUndefFunc(yylineno,(dynamic_cast<IdVal*>(node1))->IdStr);
@@ -261,7 +263,7 @@ Node* CallAction2(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node
         //yyerror("error!");
     }
     FunctionSymbol* funcSym = dynamic_cast<FunctionSymbol*>(sym);
-    return TypeNameToExp(funcSym->GetRetType());
+    return TypeNameToExp(funcSym->GetRetType(),regManagment.AllocateReg());
 }
 
 // Type -> INT
@@ -291,12 +293,13 @@ Node* ExpAction1(Node* node1 , Node* node2 , Node* node3) {
             exit(0);
             //yyerror("error!");
         }
-    return TypeNameToExp(TYPE_BOOL);
+    DataObj * dataObj = dynamic_cast<DataObj*>(node2);
+    return TypeNameToExp(TYPE_BOOL,dataObj->getWorkReg());
 }// TODO: add error here
 
 // Exp -> Exp BINOP Exp
 
-Node* ExpAction2(Node* node1 , Node* node2 , Node* node3){
+Node* ExpAction2(Node* node1 , Node* node2 , Node* node3 , RegManagment regManagment){
     TypeNameEnum node1Type = ExpToTypeName(node1);
     TypeNameEnum node2Type = ExpToTypeName(node3);
     if((node1Type != TYPE_INT && node1Type != TYPE_BYTE)
@@ -304,17 +307,21 @@ Node* ExpAction2(Node* node1 , Node* node2 , Node* node3){
             output::errorMismatch(yylineno);
             exit(0);
         }
+    DataObj * dataObj1 = dynamic_cast<DataObj*>(node1);
+    DataObj * dataObj3 = dynamic_cast<DataObj*>(node3);
+    dataObj1->freeWorkReg(regManagment);
+    dataObj3->freeWorkReg(regManagment);
     if(node1Type==TYPE_INT || node2Type==TYPE_INT ){
-        return TypeNameToExp(TYPE_INT);
+        return TypeNameToExp(TYPE_INT,regManagment.AllocateReg());
     }
     else{
-        return TypeNameToExp(TYPE_BYTE);
+        return TypeNameToExp(TYPE_BYTE,regManagment.AllocateReg());
     }
 }
 
 // Exp -> ID
 
-Node* ExpAction3(SymbolTable& symTable , Node* node1){
+Node* ExpAction3(SymbolTable& symTable , Node* node1 , RegManagment regManagment){
     std::string name = (dynamic_cast<IdVal*>(node1))->GetVal();
     Symbol* sym = symTable.GetSymbol(name);
     if(sym == NULL){
@@ -327,96 +334,111 @@ Node* ExpAction3(SymbolTable& symTable , Node* node1){
         exit(0);
         //yyerror("this is the name of a function!");
     }
-    return TypeNameToExp(sym->GetType());
+    return TypeNameToExp(sym->GetType(),regManagment.AllocateReg());
 }
 
 // Exp -> Call
 
-Node* ExpAction4(Node* node){
+Node* ExpAction4(Node* node , RegManagment regManagment){
     return node;
 }
 
 // Exp -> NUM
 
-Node* ExpAction5(Node* node){
-    return new NonTermInt(node);
+Node* ExpAction5(Node* node , RegManagment regManagment){
+    return new NonTermInt(node,regManagment.AllocateReg());
 }
 
 // Exp -> NUM B
 
-Node* ExpAction6(Node* node1 , Node* node2){
+Node* ExpAction6(Node* node1 , Node* node2 , RegManagment regManagment){
     if( !(NonTermByte::IsValidByte(node1)) )
         {
             std::string str = (dynamic_cast<NumVal*>(node1))->getStr();
             output::errorByteTooLarge(yylineno,str);
             exit(0);
         }
-    return new NonTermByte();
+    DataObj* dataObj = dynamic_cast<DataObj*>(node1);
+    return new NonTermByte(dataObj->getWorkReg());
 } // TODO: add error here
 
 // Exp -> STRING
 
-Node* ExpAction7(){
+Node* ExpAction7(RegManagment regManagment){
     return new NonTermStr();
 }
 
 // Exp -> TRUE
 
-Node* ExpAction8(){
-    return new NonTermBool();
+Node* ExpAction8(RegManagment regManagment){
+    return new NonTermBool(regManagment.AllocateReg());
 }
 
 // Exp -> FALSE
 
-Node* ExpAction9(){
-    return new NonTermBool();
+Node* ExpAction9(RegManagment regManagment){
+    return new NonTermBool(regManagment.AllocateReg());
 }
 
 // Exp -> Exp AND Exp
 
-Node* ExpAction10(Node* node1 , Node* node2 , Node* node3){
+Node* ExpAction10(Node* node1 , Node* node2 , Node* node3 , RegManagment regManagment){
     if(!(NonTermBool::IsValidBoolExp(node1,node2,node3)))
         {
             output::errorMismatch(yylineno);
             exit(0);
              //yyerror("error!");
         }
-    return new NonTermBool();
+    DataObj * dataObj1 = dynamic_cast<DataObj*>(node1);
+    DataObj * dataObj3 = dynamic_cast<DataObj*>(node3);
+    dataObj1->freeWorkReg(regManagment);
+    dataObj3->freeWorkReg(regManagment);
+    return new NonTermBool(regManagment.AllocateReg());
 }
 
 // Exp -> Exp OR Exp
 
-Node* ExpAction11(Node* node1 , Node* node2 , Node* node3){
+Node* ExpAction11(Node* node1 , Node* node2 , Node* node3 , RegManagment regManagment){
     if(!(NonTermBool::IsValidBoolExp(node1,node2,node3)))
         {
             output::errorMismatch(yylineno);
             exit(0);
              //yyerror("error!");
         }
-    return new NonTermBool();
+    DataObj * dataObj1 = dynamic_cast<DataObj*>(node1);
+    DataObj * dataObj3 = dynamic_cast<DataObj*>(node3);
+    dataObj1->freeWorkReg(regManagment);
+    dataObj3->freeWorkReg(regManagment);
+    return new NonTermBool(regManagment.AllocateReg());
 }
 
 // Exp -> Exp RELOP Exp
 
-Node* ExpAction12(Node* node1 , Node* node2 , Node* node3){
+Node* ExpAction12(Node* node1 , Node* node2 , Node* node3 , RegManagment regManagment){
     if(!(NonTermBool::IsValidBoolExpRelExp(node1,node2,node3)))
         {
             output::errorMismatch(yylineno);
             exit(0);
         }
-    return new NonTermBool();
+    DataObj * dataObj1 = dynamic_cast<DataObj*>(node1);
+    DataObj * dataObj3 = dynamic_cast<DataObj*>(node3);
+    dataObj1->freeWorkReg(regManagment);
+    dataObj3->freeWorkReg(regManagment);
+    return new NonTermBool(regManagment.AllocateReg());
 }
 
 // Exp -> NOT Exp
 
-Node* ExpAction13(Node* node1 , Node* node2){
+Node* ExpAction13(Node* node1 , Node* node2 , RegManagment regManagment){
     if(!(NonTermBool::IsValidBoolExp(node2)))
         {
             output::errorMismatch(yylineno);
             exit(0);
              //yyerror("error!");
         }
-    return new NonTermBool();
+    DataObj * dataObj = dynamic_cast<DataObj*>(node2);
+    dataObj->freeWorkReg(regManagment);
+    return new NonTermBool(regManagment.AllocateReg());
 }
 
 //=================================== Handling Home Work's Special Functions ===============================================

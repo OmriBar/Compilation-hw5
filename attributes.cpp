@@ -13,12 +13,12 @@ bool IsItConstOrExistingSymbol(DataObj * dataObject){
     return false;
 }
 
-Node* TypeNameToExp(TypeNameEnum type){
+Node* TypeNameToExp(TypeNameEnum type , WorkReg workReg){
         switch(type){
             case TYPE_FUNC: return new NonTermFunc() ; break; // A Function cant be an ID in expression , so it must be an error!
-            case TYPE_INT: return new NonTermInt(); break;
-            case TYPE_BYTE: return new NonTermByte(); break;
-            case TYPE_BOOL: return new NonTermBool(); break;
+            case TYPE_INT: return new NonTermInt(workReg); break;
+            case TYPE_BYTE: return new NonTermByte(workReg); break;
+            case TYPE_BOOL: return new NonTermBool(workReg); break;
             case TYPE_STR: return new NonTermStr(); break;
         }
     return NULL;  

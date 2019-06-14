@@ -7,6 +7,7 @@
 #include "string"
 #include "typeEnums.h"
 #include "AidFunctions.h"
+#include "RegManagment.h"
 
 using namespace std;
 
@@ -102,12 +103,19 @@ class StrVal : public Node {
 class DataObj : public Node {
     public:
         TypeNameEnum type;
+        WorkReg DataReg;
         std::string Name;
         bool IsVar;
-        DataObj(std::string name ) : Name(name) {
+        WorkReg getWorkReg() {
+            return DataReg;
+        }
+        WorkReg freeWorkReg(RegManagment regManagment) {
+            regManagment.FreeReg(DataReg);
+        }
+        DataObj(std::string name , WorkReg dataReg ) : Name(name) , DataReg(dataReg) {
             IsVar = true;
         }
-        DataObj() {
+        DataObj(WorkReg dataReg) : DataReg(dataReg) {
             IsVar = false;
         }
         bool IsItVar() {return IsVar;}
@@ -121,12 +129,12 @@ class NonTermBool : public DataObj {
     static bool IsValidBoolExp(Node * node);
     static bool IsValidBoolExp(Node * node1, Node * node2 , Node * node3);
     static bool IsValidBoolExpRelExp(Node * node1, Node * node2 , Node * node3);
-    NonTermBool();
-    NonTermBool(std::string name);
+    NonTermBool(WorkReg dataReg);
+    NonTermBool(std::string name , WorkReg dataReg);
     bool IsItVar() {return IsItVar();}
 };
 
-class NonTermStr : public DataObj {
+class NonTermStr : public DataObj { //check whats up with that inside registers
      public:
      NonTermStr();
      NonTermStr(std::string name);
@@ -135,17 +143,17 @@ class NonTermStr : public DataObj {
 class NonTermInt : public DataObj {
     int NumericValue;
     public:
-    NonTermInt();
-    NonTermInt(Node * numericValueNode);
-    NonTermInt(std::string name);
+    NonTermInt(WorkReg dataReg);
+    NonTermInt(Node * numericValueNode , WorkReg dataReg);
+    NonTermInt(std::string name , WorkReg dataReg);
     int GetNumericValue();
 };
 
 class NonTermByte : public DataObj {
     public:
     static bool IsValidByte(Node * node1);
-    NonTermByte();
-    NonTermByte(std::string name);
+    NonTermByte(WorkReg dataReg);
+    NonTermByte(std::string name , WorkReg dataReg);
 };
 
 class IDNotExists : public DataObj {
@@ -210,7 +218,7 @@ class PreCondListObj : public Node {
 
 bool IsItConstOrExistingSymbol(DataObj * dataObject);
 
-Node* TypeNameToExp(TypeNameEnum type);
+Node* TypeNameToExp(TypeNameEnum type , WorkReg WorkReg);
 
 TypeNameEnum ExpToTypeName(Node * node);
 

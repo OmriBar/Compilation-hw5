@@ -1,10 +1,10 @@
 #include "attributes.h"
 
-NonTermBool::NonTermBool() {
+NonTermBool::NonTermBool(WorkReg dataReg) : DataObj(dataReg) {
 this->type = TYPE_BOOL;
 }
 
-NonTermBool::NonTermBool(std::string name) : DataObj(name) {
+NonTermBool::NonTermBool(std::string name , WorkReg dataReg) : DataObj(name,dataReg) {
 this->type = TYPE_BOOL;
 }
 

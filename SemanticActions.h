@@ -3,7 +3,9 @@
 
 #include "attributes.h"
 #include "SymbolTable.h"
+#include "RegManagment.h"
 #include <stdlib.h> 
+
 extern int yylineno;
 extern Node* yylval;
 
@@ -56,31 +58,31 @@ Node* TypeAction2();
 // Type -> BOOL
 Node* TypeAction3();
 // Exp -> LPAREN Exp RPAREN
-Node* ExpAction1(Node* node1 , Node* node2 , Node* node3);
+Node* ExpAction1(Node* node1 , Node* node2 , Node* node3 , RegManagment RegManagment);
 // Exp -> Exp BINOP Exp
-Node* ExpAction2(Node* node1 , Node* node2 , Node* node3);
+Node* ExpAction2(Node* node1 , Node* node2 , Node* node3 , RegManagment RegManagment);
 // Exp -> ID
-Node* ExpAction3(SymbolTable& symTable , Node* node1 );
+Node* ExpAction3(SymbolTable& symTable , Node* node1  , RegManagment RegManagment);
 // Exp -> Call
-Node* ExpAction4(Node* node);
+Node* ExpAction4(Node* node , RegManagment RegManagment);
 // Exp -> NUM
-Node* ExpAction5(Node* node);
+Node* ExpAction5(Node* node , RegManagment RegManagment);
 // Exp -> NUM B
-Node* ExpAction6(Node* node1 , Node* node2);
+Node* ExpAction6(Node* node1 , Node* node2 , RegManagment RegManagment);
 // Exp -> STRING
-Node* ExpAction7();
+Node* ExpAction7(RegManagment RegManagment);
 // Exp -> TRUE
-Node* ExpAction8();
+Node* ExpAction8(RegManagment RegManagment);
 // Exp -> FALSE
-Node* ExpAction9();
+Node* ExpAction9(RegManagment RegManagment);
 // Exp -> Exp AND Exp
-Node* ExpAction10(Node* node1 , Node* node2 , Node* node3);
+Node* ExpAction10(Node* node1 , Node* node2 , Node* node3 , RegManagment RegManagment);
 // Exp -> Exp OR Exp
-Node* ExpAction11(Node* node1 , Node* node2 , Node* node3);
+Node* ExpAction11(Node* node1 , Node* node2 , Node* node3 , RegManagment RegManagment);
 // Exp -> Exp RELOP Exp
-Node* ExpAction12(Node* node1 , Node* node2 , Node* node3);
+Node* ExpAction12(Node* node1 , Node* node2 , Node* node3 , RegManagment RegManagment);
 // Exp -> NOT Exp
-Node* ExpAction13(Node* node1 , Node* node2);
+Node* ExpAction13(Node* node1 , Node* node2 , RegManagment RegManagment);
 
 void CallToEnterGlobalScope(SymbolTable& symTable);
 

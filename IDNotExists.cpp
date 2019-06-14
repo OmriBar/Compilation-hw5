@@ -1,5 +1,5 @@
 #include "attributes.h"
 
-IDNotExists::IDNotExists() {}
+IDNotExists::IDNotExists() : DataObj(NONE) {}
     
-IDNotExists::IDNotExists(std::string name) : DataObj(name) {}
+IDNotExists::IDNotExists(std::string name) : DataObj(name,NONE) {}
