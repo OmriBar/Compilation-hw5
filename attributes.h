@@ -128,6 +128,7 @@ class StrVal : public Node {
     std::string str;
     public:
         StrVal(char * strVal) : str(strVal) {}
+        std::string GetStr() {return str;}
 };
 
 //======================================Data Objects Classes=====================================//

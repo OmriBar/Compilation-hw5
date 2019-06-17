@@ -110,8 +110,9 @@ void StatmentAction2(SymbolTable& symTable , Node* node1 , Node* node2, Node* no
     }
     TypeNameEnum type = TypeNameToTypeEnum(node1);
     symTable.AddVariableSymbol(name , symTable.getCurrentIndex()+1 ,type);
-    WorkReg reg = regManagment.AllocateReg();
+    WorkReg reg = (dynamic_cast<DataObj*>(node4))->getWorkReg();
     AddAndAssignNonBoolVarToBuffer(reg,regManagment,codeBuffer);
+    regManagment.FreeReg(reg);
 }
 
 //Statment -> ID ASSIGN Exp SC
@@ -133,6 +134,7 @@ void StatmentAction3(SymbolTable& symTable , Node* node1 , Node* node2, Node* no
     WorkReg reg = (dynamic_cast<DataObj*>(node3))->getWorkReg();
     int varOffset = sym->GetIndex();
     AssignNonBoolVarToBuffer(reg,varOffset,regManagment,codeBuffer);
+    regManagment.FreeReg(reg);
 }
 
 //Statment -> BREAK SC 
@@ -396,8 +398,10 @@ Node* ExpAction6(Node* node1 , Node* node2 , RegManagment& regManagment, CodeBuf
 
 // Exp -> STRING
 
-Node* ExpAction7(RegManagment& regManagment, CodeBuffer& codeBuffer){
-    return new NonTermStr();
+Node* ExpAction7(Node* node1 , RegManagment& regManagment, CodeBuffer& codeBuffer){
+    std::string text = (dynamic_cast<StrVal*>(node1))->GetStr();
+    std::string label = SaveStringToData(text,regManagment,codeBuffer);
+    return new NonTermStr(label);
 }
 
 // Exp -> TRUE
@@ -633,8 +637,8 @@ void BinopCmdToBuffer(WorkReg left , opTypeEnum op , WorkReg right , WorkReg res
     }
     std::stringstream command;
     command << opStr;
-    command << " $" << left << ",";
-    command << " $" << right << ",";
+    command << " $" << WorkRegEnumToStr(left) << ",";
+    command << " $" << WorkRegEnumToStr(right) << ",";
     command << res;
     codeBuffer.emit(command.str());
 }
