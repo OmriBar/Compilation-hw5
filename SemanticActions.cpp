@@ -226,14 +226,15 @@ bool AreParaListsEqual(std::list<TypeNameEnum> list1 , std::list<TypeNameEnum> l
 
 // Call -> ID LPAREN ExpList RPAREN
 
-Node* CallAction1(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3 , Node* node4 , RegManagment regManagment){
+Node* CallAction1(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3 , Node* node4
+ , RegManagment regManagment , CodeBuffer& codeBuffer){
     Symbol * sym = symTable.GetSymbol((dynamic_cast<IdVal*>(node1))->IdStr);
     if(sym == NULL || sym->GetType() != TYPE_FUNC ){
         output::errorUndefFunc(yylineno,(dynamic_cast<IdVal*>(node1))->IdStr);
         exit(0);
     }
     std::list<TypeNameEnum> symParas = (dynamic_cast<FunctionSymbol*>(sym))->GetParametersList();
-    std::list<TypeNameEnum> expListparas = (dynamic_cast<ParaListObj*>(node3))->GetParaList();
+    std::list<TypeNameEnum> expListparas = (dynamic_cast<ExpListObj*>(node3))->GetTypesListObj();
     std::vector<string> vector_symParas = ParaListToStrings(symParas);
     /*std::vector<string> list1 = ParaListToStrings(symParas);
     std::vector<string> list2 = ParaListToStrings(expListparas);
@@ -254,10 +255,35 @@ Node* CallAction1(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node
     }
     FunctionSymbol* funcSym = dynamic_cast<FunctionSymbol*>(sym);
     if(funcSym->GetName()=="print"){
-        
+        std::list<DataObj*> expList = (dynamic_cast<ExpListObj*>(node3))->GetExpListObj();
+        NonTermStr* nonTermStr = dynamic_cast<NonTermStr*>(expList.back());
+        WorkReg ret=callPrintToBuffer(nonTermStr->GetLabel(),regManagment,codeBuffer);
+        regManagment.FreeReg(ret);
     }
     else if(funcSym->GetName()=="printi"){
-        
+        std::list<DataObj*> expList = (dynamic_cast<ExpListObj*>(node3))->GetExpListObj();
+        DataObj* nonTermInt = expList.back();
+        WorkReg workReg = nonTermInt->getWorkReg();
+        callPrintiToBuffer(workReg,regManagment,codeBuffer);
+        regManagment.FreeReg(workReg);
+    }
+    else{
+        std::list<DataObj*> expList = (dynamic_cast<ExpListObj*>(node3))->GetExpListObj();
+        expList.reverse();
+        DataObj* data;
+        for(std::list<DataObj*>::iterator it = expList.begin(); it != expList.end(); it++){
+            data = *it;
+            codeBuffer.emit("subu $sp, $sp, 4");
+            codeBuffer.emit("sw " +WorkRegEnumToStr(data->getWorkReg()) + ", ($sp)");
+            regManagment.FreeReg(data->getWorkReg());
+        }
+        codeBuffer.emit("jal func_"+funcSym->GetName());
+        std::stringstream toStr;
+        toStr <<(expList.size()*4);
+        codeBuffer.emit("lw $ra, 0(sp)");
+        codeBuffer.emit("lw $fp, 4(sp)");
+        codeBuffer.emit("addu $sp, $sp, 8");
+        codeBuffer.emit("addu $sp, $sp, " + toStr.str());
     }
     return TypeNameToExp(funcSym->GetRetType(),regManagment.AllocateReg());
 }
@@ -681,26 +707,28 @@ std::string SaveStringToData(std::string text  , RegManagment& regManagment , Co
     return label.str();
 }
 
-void callPrintToBuffer(std::string text  , RegManagment& regManagment , CodeBuffer& codeBuffer){
-    static int stringCounter=0;
-    WorkReg reg = regManagment.AllocateReg();
-    std::stringstream counterToStr;
-    counterToStr << (stringCounter++);
-    std::string stringCounterStr = counterToStr.str();
-    std::stringstream label;
-    label << "_strData" << (stringCounter++) << "_: .asciiz ";
-    codeBuffer.emitData( "_strData" + stringCounterStr + "_: .asciiz " + "\"" + text + "\"");
-	codeBuffer.emit("subu $sp, $sp , 4");
-	codeBuffer.emit("la " + WorkRegEnumToStr(reg) + ", " + "_strData" + stringCounterStr + "_");
-	codeBuffer.emit("sw " + WorkRegEnumToStr(reg) + ", 0($sp)");
-	regManagment.FreeReg(reg);
-	codeBuffer.emit("jal print");
-	codeBuffer.emit("lw $ra, 4($sp)");
-	codeBuffer.emit("lw $fp, 8($sp)");
-	codeBuffer.emit("addu $sp, $sp , 12");
-	codeBuffer.emit("li $v0, 10");
-	codeBuffer.emit("syscall");
+WorkReg callPrintToBuffer(std::string label , RegManagment& regManagment , CodeBuffer& codeBuffer){
+        codeBuffer.emit("subu $sp, $sp , 4");
+		WorkReg tempReg = regManagment.AllocateReg();
+		codeBuffer.emit("la "+ WorkRegEnumToStr(tempReg) + ", " + label);
+		codeBuffer.emit("sw " + WorkRegEnumToStr(tempReg) + ", 0($sp)");
+		codeBuffer.emit("jal print");
+		codeBuffer.emit("lw $ra, 4($sp)");
+		codeBuffer.emit("lw $fp, 8($sp)");
+		codeBuffer.emit("addu $sp, $sp , 12");
+        return tempReg;
 }
+
+
+void callPrintiToBuffer(WorkReg workReg , RegManagment& regManagment , CodeBuffer& codeBuffer){
+        codeBuffer.emit("subu $sp, $sp , 4");
+		codeBuffer.emit("sw " + WorkRegEnumToStr(workReg) + ", 0($sp)");
+		codeBuffer.emit("jal printi");
+		codeBuffer.emit("lw $ra, 4($sp)");
+		codeBuffer.emit("lw $fp, 8($sp)");
+		codeBuffer.emit("addu $sp, $sp , 12");
+}
+
 
 //=========== Variables Related Functions ====================
 

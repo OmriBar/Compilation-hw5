@@ -173,6 +173,7 @@ class NonTermStr : public DataObj { //check whats up with that inside registers
      public:
      NonTermStr();
      NonTermStr(std::string label);
+     std::string GetLabel() {return label;}
 };
 
 class NonTermInt : public DataObj {
@@ -228,6 +229,29 @@ class ExpListObj : public Node {
             ExpList.push_front(newExp);
         }
         std::list<DataObj*> GetExpListObj() {return ExpList;}
+        std::list<TypeNameEnum> GetTypesListObj() {
+            std::list<TypeNameEnum> typesList;
+            std::list<DataObj*> dataList(ExpList);
+            while(! dataList.empty()){
+                DataObj* obj = dataList.back();
+                TypeNameEnum type;
+                if(dynamic_cast<NonTermBool*>(obj)){
+                    type = TYPE_BOOL;
+                }
+                else if(dynamic_cast<NonTermInt*>(obj)){
+                    type = TYPE_INT;
+                }
+                else if(dynamic_cast<NonTermByte*>(obj)){
+                    type = TYPE_BYTE;
+                }
+                else if(dynamic_cast<NonTermStr*>(obj)){
+                    type = TYPE_STR;
+                }
+                typesList.push_front(type);
+                dataList.pop_back();
+            }
+            return typesList;
+        }
         int GetExpListObjSize() {return ExpList.size();}
 };
 
