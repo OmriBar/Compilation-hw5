@@ -1,6 +1,6 @@
 #include "SymbolTable.h"
 #include <stdlib.h> 
-SymbolTable::SymbolTable() : isThereMain(false), CurrentRetType(TYPE_NONEXIST) , ScopesList(), CurrentScopeLevel(0) ,CurrentIndexInScope(0) {
+SymbolTable::SymbolTable() : IsEnteringFuncParas(false) , isThereMain(false), CurrentRetType(TYPE_NONEXIST) , ScopesList(), CurrentScopeLevel(0) ,CurrentIndexInScope(0) {
     ScopesList.push_back(std::list<Symbol*>());
     std::list<TypeNameEnum> typesList1 = std::list<TypeNameEnum>();
     typesList1.push_back(TYPE_STR);
@@ -99,15 +99,22 @@ std::list<Symbol*> SymbolTable::GetCurrentScope(){
 }
 
 int SymbolTable::GetNCurrIndexInMem(){
-    int numOfVars = 0;
-    std::list<std::list<Symbol*> >::iterator it = ScopesList.begin();
-    int tmp = (*it).size();
-    for(it = ScopesList.begin();
-    it != ScopesList.end() ; it++){
-        numOfVars += (*it).size();
+    if(IsEnteringFuncParas){
+        return (-1)*(ScopesList.back().size());
     }
-    numOfVars -= ScopesList.front().size();
-    //std::cout<<std::endl << ScopesList.front().size() << std::endl;
+    else{
+        int numOfVars = 0;
+        std::list<std::list<Symbol*> >::iterator it = ScopesList.begin();
+        int tmp = (*it).size();
+        for(it = ScopesList.begin();
+        it != ScopesList.end() ; it++){
+            numOfVars += (*it).size();
+        }
+        int numPara = dynamic_cast<FunctionSymbol*>(ScopesList.front().front())->GetParametersList().size();
+        numOfVars -= ScopesList.front().size()+numPara;
+        return numOfVars;
+        //std::cout<<std::endl << ScopesList.front().size() << std::endl;
+    }
 
 }
 

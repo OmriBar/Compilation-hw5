@@ -4,6 +4,8 @@
 #include "attributes.h"
 #include "SymbolTable.h"
 #include "RegManagment.h"
+#include <sstream>
+#include "bp.hpp"
 #include <stdlib.h> 
 
 extern int yylineno;
@@ -58,31 +60,31 @@ Node* TypeAction2();
 // Type -> BOOL
 Node* TypeAction3();
 // Exp -> LPAREN Exp RPAREN
-Node* ExpAction1(Node* node1 , Node* node2 , Node* node3 , RegManagment RegManagment);
+Node* ExpAction1(Node* node1 , Node* node2 , Node* node3 , RegManagment RegManagment , CodeBuffer codeBuffer);
 // Exp -> Exp BINOP Exp
-Node* ExpAction2(Node* node1 , Node* node2 , Node* node3 , RegManagment RegManagment);
+Node* ExpAction2(Node* node1 , Node* node2 , Node* node3 , RegManagment RegManagment , CodeBuffer codeBuffer);
 // Exp -> ID
-Node* ExpAction3(SymbolTable& symTable , Node* node1  , RegManagment RegManagment);
+Node* ExpAction3(SymbolTable& symTable , Node* node1  , RegManagment RegManagment , CodeBuffer codeBuffer);
 // Exp -> Call
-Node* ExpAction4(Node* node , RegManagment RegManagment);
+Node* ExpAction4(Node* node , RegManagment RegManagment , CodeBuffer codeBuffer);
 // Exp -> NUM
-Node* ExpAction5(Node* node , RegManagment RegManagment);
+Node* ExpAction5(Node* node , RegManagment RegManagment , CodeBuffer codeBuffer);
 // Exp -> NUM B
-Node* ExpAction6(Node* node1 , Node* node2 , RegManagment RegManagment);
+Node* ExpAction6(Node* node1 , Node* node2 , RegManagment RegManagment , CodeBuffer codeBuffer);
 // Exp -> STRING
-Node* ExpAction7(RegManagment RegManagment);
+Node* ExpAction7(RegManagment RegManagment , CodeBuffer codeBuffer);
 // Exp -> TRUE
-Node* ExpAction8(RegManagment RegManagment);
+Node* ExpAction8(RegManagment RegManagment , CodeBuffer codeBuffer);
 // Exp -> FALSE
-Node* ExpAction9(RegManagment RegManagment);
+Node* ExpAction9(RegManagment RegManagment , CodeBuffer codeBuffer);
 // Exp -> Exp AND Exp
-Node* ExpAction10(Node* node1 , Node* node2 , Node* node3 , RegManagment RegManagment);
+Node* ExpAction10(Node* node1 , Node* node2 , Node* node3 , RegManagment RegManagment , CodeBuffer codeBuffer);
 // Exp -> Exp OR Exp
-Node* ExpAction11(Node* node1 , Node* node2 , Node* node3 , RegManagment RegManagment);
+Node* ExpAction11(Node* node1 , Node* node2 , Node* node3 , RegManagment RegManagment , CodeBuffer codeBuffer);
 // Exp -> Exp RELOP Exp
-Node* ExpAction12(Node* node1 , Node* node2 , Node* node3 , RegManagment RegManagment);
+Node* ExpAction12(Node* node1 , Node* node2 , Node* node3 , RegManagment RegManagment , CodeBuffer codeBuffer);
 // Exp -> NOT Exp
-Node* ExpAction13(Node* node1 , Node* node2 , RegManagment RegManagment);
+Node* ExpAction13(Node* node1 , Node* node2 , RegManagment RegManagment , CodeBuffer codeBuffer);
 
 void CallToEnterGlobalScope(SymbolTable& symTable);
 
@@ -105,7 +107,7 @@ void CallToExitScopeWithPreConds(SymbolTable& symTable , Node* node1 , Node* nod
         Node* node4 , Node* node5 , Node* node6 , Node* node7);
 
 void addFunction(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3 ,
-        Node* node4 , Node* node5 , Node* node6 , Node* node7);
+        Node* node4 , Node* node5 , Node* node6 , Node* node7 , CodeBuffer& codeBuffer);
         
 void checkIfBoolInWhileIf(Node* node);
 

@@ -4,6 +4,7 @@
     #include "SemanticActions.h"
     #include "output.hpp"
     #include "RegManagment.h"
+    #include "bp.hpp"
 
 	#include <iostream>
 	#include <stdlib.h>
@@ -13,8 +14,14 @@
     extern int yylineno;
 	extern int yyerror(char const*);
 
+    int currentOffset;
+
     SymbolTable globalSymbolTable;
+
     RegManagment regManagment;
+
+    const CodeBuffer& codeBuffer;
+
     int in_while_flag;
     bool main_flag = false;
 %}
@@ -68,7 +75,7 @@ FuncDecl :
         Formals 
     RPAREN 
         PreConditions 
-                {addFunction(globalSymbolTable,$1,$2,$3,$4,$5,$6,$7);}
+                {addFunction(globalSymbolTable,$1,$2,$3,$4,$5,$6,$7,codeBuffer);}
       LBRACE
         Statements 
       RBRACE 
@@ -134,19 +141,19 @@ Type :
     BOOL    { $$ = TypeAction3(); }
 ;
 Exp : 
-    LPAREN Exp RPAREN   { $$ = ExpAction1($1,$2,$3,regManagment);}                    |
-    Exp BINOP Exp       { $$ = ExpAction2($1,$2,$3,regManagment);}                    |
-    ID                  { $$ = ExpAction3(globalSymbolTable,$1,regManagment);}        |
-    Call                { $$ = ExpAction4($1,regManagment); }                         |  
-    NUM                 { $$ = ExpAction5($1,regManagment); }                         |
-    NUM B               { $$ = ExpAction6($1,$2,regManagment); }                      |
-    STRING              { $$ = ExpAction7(regManagment); }                            |
-    TRUE                { $$ = ExpAction8(regManagment); }                            |
-    FALSE               { $$ = ExpAction9(regManagment); }                            |
-	Exp AND Exp         { $$ = ExpAction10($1,$2,$3,regManagment); }                  |
-    Exp OR Exp          { $$ = ExpAction11($1,$2,$3,regManagment); }                  |
-    Exp RELOP Exp       { $$ = ExpAction12($1,$2,$3,regManagment); }                  |
-    NOT Exp             { $$ = ExpAction13($1,$2,regManagment); } 
+    LPAREN Exp RPAREN   { $$ = ExpAction1($1,$2,$3,regManagment,codeBuffer);}                    |
+    Exp BINOP Exp       { $$ = ExpAction2($1,$2,$3,regManagment,codeBuffer);}                    |
+    ID                  { $$ = ExpAction3(globalSymbolTable,$1,regManagment,codeBuffer);}        |
+    Call                { $$ = ExpAction4($1,regManagment,codeBuffer); }                         |  
+    NUM                 { $$ = ExpAction5($1,regManagment,codeBuffer); }                         |
+    NUM B               { $$ = ExpAction6($1,$2,regManagment,codeBuffer); }                      |
+    STRING              { $$ = ExpAction7(regManagment,codeBuffer); }                            |
+    TRUE                { $$ = ExpAction8(regManagment,codeBuffer); }                            |
+    FALSE               { $$ = ExpAction9(regManagment,codeBuffer); }                            |
+	Exp AND Exp         { $$ = ExpAction10($1,$2,$3,regManagment,codeBuffer); }                  |
+    Exp OR Exp          { $$ = ExpAction11($1,$2,$3,regManagment,codeBuffer); }                  |
+    Exp RELOP Exp       { $$ = ExpAction12($1,$2,$3,regManagment,codeBuffer); }                  |
+    NOT Exp             { $$ = ExpAction13($1,$2,regManagment,codeBuffer); } 
 
     
 ;
@@ -155,13 +162,19 @@ Exp :
 
 int main()
 {
+    currentOffset = 0;
     globalSymbolTable = SymbolTable();
     regManagment = RegManagment();
+    CodeBuffer = codeBuffer();
     in_while_flag = 0;
+    codeBuffer.emit(".globl main");
 	if(yyparse() != 0){
         if(!(globalSymbolTable.IsMainExists())){
             output::errorMainMissing();
         }
     }
+    codeBuffer.printDataBuffer();
+	codeBuffer.printCodeBuffer();
+
 }
 

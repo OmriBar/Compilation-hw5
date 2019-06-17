@@ -17,9 +17,9 @@ int         					{yylval = new Type(TYPE_INT); return INT;}
 b          						{yylval = new Type(TYPE_BYTE); return B;}
 byte         		    		{yylval = new Type(TYPE_BYTE); return BYTE;}
 bool                			{yylval = new Type(TYPE_BOOL); return BOOL;}
-and          					{yylval = new Op(OP_AND); return AND;}
-or          					{yylval = new Op(OP_OR); return OR;}
-not          					{yylval = new Op(OP_NOT); return NOT;}
+and          					{yylval = new BinaryOp(OP_AND); return AND;}
+or          					{yylval = new BinaryOp(OP_OR); return OR;}
+not          					{yylval = new BinaryOp(OP_NOT); return NOT;}
 true              				{yylval = new BoolVal(BOOLVAL_TRUE); return TRUE;}
 false             				{yylval = new BoolVal(BOOLVAL_FALSE); return FALSE;}
 return            				{yylval = new CmdWord(CMD_RETURN); return RETURN;}
@@ -36,8 +36,8 @@ continue          				{yylval = new CmdWord(CMD_CONTINUE); return CONTINUE;}
 \{          					{yylval = new ScopeVal(SCOPE_LBRACE); return LBRACE;}
 \}          					{yylval = new ScopeVal(SCOPE_RBRACE); return RBRACE;}
 \=          					{yylval = new CmdWord(CMD_ASGN); return ASSIGN;}
-(\=\=|\!\=|<|>|<=|>=)           {yylval = new Op(yytext); return RELOP;}
-[\+\-\*\/]               		{yylval = new Op(yytext); return BINOP;}
+(\=\=|\!\=|<|>|<=|>=)           {yylval = new RelativeOp(yytext); return RELOP;}
+[\+\-\*\/]               		{yylval = new BinaryOp(yytext); return BINOP;}
 (0|[1-9][0-9]*) 				{yylval = new NumVal(yytext); return NUM;}
 [a-zA-Z][a-zA-Z0-9]*          	{yylval = new IdVal(yytext); return ID;}
 \"([^\n\r\"\\]|\\[rnt"\\])+\"   {yylval = new StrVal(yytext); return STRING;}

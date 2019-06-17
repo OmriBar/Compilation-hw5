@@ -26,11 +26,42 @@ class Type : public Node {
         Type(TypeNameEnum _typeName) : name(_typeName) {}
 };
 
-class Op : public Node {
+class BinaryOp : public Node {
     opTypeEnum type;
     public:
-        Op(opTypeEnum _opType) : type(_opType) {}
-        Op(char * _opType) {
+        BinaryOp(opTypeEnum _opType) : type(_opType) {}
+        BinaryOp(char * _opType) {
+            std::string strType(_opType);
+            if(strType == "+"){
+                type = OP_SUB;
+            }
+            else if(strType == "-"){
+                type = OP_SUB;
+            }
+            else if(strType == "*"){
+                type = OP_MUL;
+            }
+            else if(strType == "/"){
+                type = OP_DIV;
+            }
+            else if(strType == "and"){
+                type = OP_AND;
+            }
+            else if(strType == "or"){
+                type = OP_OR;
+            }
+            else if(strType == "not"){
+                type = OP_NOT;
+            }
+        }
+        opTypeEnum getType(){return type;}
+};
+
+class RelativeOp : public Node {
+    opTypeEnum type;
+    public:
+        RelativeOp(opTypeEnum _opType) : type(_opType) {}
+        RelativeOp(char * _opType) {
             std::string strType(_opType);
             if(strType == "=="){
                 type = OP_EQU;
@@ -54,6 +85,7 @@ class Op : public Node {
                 type = OP_LEFTBIGEQ;
             }
         }
+        opTypeEnum getType(){return type;}
 };
 
 class BoolVal : public Node {

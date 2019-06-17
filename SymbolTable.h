@@ -11,6 +11,7 @@
 using namespace std;
 
 class Symbol {
+    int Offset;
     std::string SymbolName;
     int SymbolIndex; 
     TypeNameEnum Type;
@@ -43,6 +44,7 @@ class FunctionSymbol : public Symbol {
 };
 
 class SymbolTable {
+    bool IsEnteringFuncParas;
     bool isThereMain;
     TypeNameEnum CurrentRetType;
     std::list<std::list<Symbol*> > ScopesList;
@@ -66,6 +68,8 @@ class SymbolTable {
         void printTable();
         FunctionSymbol* GetCurrentFunction();
         int GetNCurrIndexInMem();
+        void StartEnteringFuncParas() { IsEnteringFuncParas = true;}
+        void StopEnteringFuncParas() { IsEnteringFuncParas = false;}
 };
 
 #endif

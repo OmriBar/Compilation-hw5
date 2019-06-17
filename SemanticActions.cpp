@@ -79,47 +79,49 @@ void PreConditionAction1(Node* node1 , Node* node2 , Node* node3 , Node* node4) 
 }
 //Statment -> Type ID SC
 
-void StatmentAction1(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3){
+void StatmentAction1(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3 , RegManagment& regManagment , CodeBuffer& codeBuffer){
     std::string name = (dynamic_cast<IdVal*>(node2))->IdStr;
     Symbol* sym = symTable.GetSymbol(name);
     if(sym != NULL){
         output::errorDef(yylineno,(dynamic_cast<IdVal*>(node2))->IdStr); // already exists in the symbol table
         exit(0);
-        //yyerror("");
     }
     TypeNameEnum type = TypeNameToTypeEnum(node1);
     symTable.AddVariableSymbol(name , symTable.getCurrentIndex()+1 ,type);
+    AddNonBoolVarToBuffer(regManagment,codeBuffer);
+    
 }
 
 //Statment -> Type ID ASSIGN Exp SC
 
-void StatmentAction2(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3, Node* node4, Node* node5){
+void StatmentAction2(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3, Node* node4, Node* node5
+, RegManagment& regManagment , CodeBuffer& codeBuffer){
     std::string name = (dynamic_cast<IdVal*>(node2))->IdStr;
     Symbol* sym = symTable.GetSymbol(name);
     
     if(sym != NULL){
         output::errorDef(yylineno,(dynamic_cast<IdVal*>(node2))->IdStr); // alrady exists in the symbol table
         exit(0);
-        //yyerror("");
     }
     if(dynamic_cast<Type*>(node1)->name != ExpToTypeName(node4) &&
         !(dynamic_cast<Type*>(node1)->name == TYPE_INT && ExpToTypeName(node4) == TYPE_BYTE)){ // mismatch
         output::errorMismatch(yylineno);
         exit(0);
-        //yyerror("");
     }
     TypeNameEnum type = TypeNameToTypeEnum(node1);
     symTable.AddVariableSymbol(name , symTable.getCurrentIndex()+1 ,type);
+    WorkReg reg = regManagment.AllocateReg();
+    AddAndAssignNonBoolVarToBuffer(reg,regManagment,codeBuffer);
 }
 
 //Statment -> ID ASSIGN Exp SC
-void StatmentAction3(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3, Node* node4){
+void StatmentAction3(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3, Node* node4
+        ,RegManagment& regManagment , CodeBuffer& codeBuffer){
     std::string name = (dynamic_cast<IdVal*>(node1))->IdStr;
     Symbol* sym = symTable.GetSymbol(name);
     if(sym == NULL || sym->GetType() == TYPE_FUNC){
         output::errorUndef(yylineno, (dynamic_cast<IdVal*>(node1))->IdStr); // not exists in the symbol table
         exit(0);
-        //yyerror("error!");
     }
     TypeNameEnum type = sym->GetType();
     if((type != ExpToTypeName(node3)) &&
@@ -128,6 +130,9 @@ void StatmentAction3(SymbolTable& symTable , Node* node1 , Node* node2, Node* no
         exit(0);
         //yyerror("error!");
     }
+    WorkReg reg = (dynamic_cast<DataObj*>(node3))->getWorkReg();
+    int varOffset = sym->GetIndex();
+    AssignNonBoolVarToBuffer(reg,varOffset,regManagment,codeBuffer);
 }
 
 //Statment -> BREAK SC 
@@ -299,7 +304,7 @@ Node* ExpAction1(Node* node1 , Node* node2 , Node* node3) {
 
 // Exp -> Exp BINOP Exp
 
-Node* ExpAction2(Node* node1 , Node* node2 , Node* node3 , RegManagment regManagment){
+Node* ExpAction2(Node* node1 , Node* node2 , Node* node3 , RegManagment& regManagment, CodeBuffer& codeBuffer){
     TypeNameEnum node1Type = ExpToTypeName(node1);
     TypeNameEnum node2Type = ExpToTypeName(node3);
     if((node1Type != TYPE_INT && node1Type != TYPE_BYTE)
@@ -311,78 +316,107 @@ Node* ExpAction2(Node* node1 , Node* node2 , Node* node3 , RegManagment regManag
     DataObj * dataObj3 = dynamic_cast<DataObj*>(node3);
     dataObj1->freeWorkReg(regManagment);
     dataObj3->freeWorkReg(regManagment);
+    WorkReg resReg = regManagment.AllocateReg();
+
+    opTypeEnum op = (dynamic_cast<BinaryOp*>(node2))->getType();
+    BinopCmdToBuffer(dataObj1->getWorkReg(),op,dataObj3->getWorkReg(),resReg,regManagment,codeBuffer);
+
     if(node1Type==TYPE_INT || node2Type==TYPE_INT ){
-        return TypeNameToExp(TYPE_INT,regManagment.AllocateReg());
+        return TypeNameToExp(TYPE_INT,resReg);
     }
     else{
-        return TypeNameToExp(TYPE_BYTE,regManagment.AllocateReg());
+        return TypeNameToExp(TYPE_BYTE,resReg);
     }
 }
 
 // Exp -> ID
 
-Node* ExpAction3(SymbolTable& symTable , Node* node1 , RegManagment regManagment){
+Node* ExpAction3(SymbolTable& symTable , Node* node1 , RegManagment& regManagment, CodeBuffer& codeBuffer){
     std::string name = (dynamic_cast<IdVal*>(node1))->GetVal();
     Symbol* sym = symTable.GetSymbol(name);
     if(sym == NULL){
         output::errorUndef(yylineno,name);
         exit(0);
-        //yyerror("no such variable!");
     }
     else if(sym->GetType() == TYPE_FUNC){
         output::errorUndef(yylineno,name);
         exit(0);
-        //yyerror("this is the name of a function!");
     }
     return TypeNameToExp(sym->GetType(),regManagment.AllocateReg());
 }
 
-// Exp -> Call
+// Exp -> Call 
 
-Node* ExpAction4(Node* node , RegManagment regManagment){
+Node* ExpAction4(Node* node , RegManagment& regManagment, CodeBuffer& codeBuffer){
     return node;
 }
 
 // Exp -> NUM
 
-Node* ExpAction5(Node* node , RegManagment regManagment){
-    return new NonTermInt(node,regManagment.AllocateReg());
+Node* ExpAction5(Node* node , RegManagment& regManagment, CodeBuffer& codeBuffer){
+    std::string numberStr = (dynamic_cast<NumVal*>(node))->getStr();
+    std::stringstream command;
+    WorkReg resReg = regManagment.AllocateReg();
+    command << "li ";
+    command << "$" << resReg << ", ";
+    command << numberStr;
+    codeBuffer.emit(command.str());
+    return new NonTermInt(node,resReg);
 }
 
 // Exp -> NUM B
 
-Node* ExpAction6(Node* node1 , Node* node2 , RegManagment regManagment){
+Node* ExpAction6(Node* node1 , Node* node2 , RegManagment& regManagment, CodeBuffer& codeBuffer){
     if( !(NonTermByte::IsValidByte(node1)) )
         {
             std::string str = (dynamic_cast<NumVal*>(node1))->getStr();
             output::errorByteTooLarge(yylineno,str);
             exit(0);
         }
+    std::string numberStr = (dynamic_cast<NumVal*>(node1))->getStr();
+    std::stringstream command;
+    WorkReg resReg = regManagment.AllocateReg();
+    command << "li ";
+    command << "$" << resReg << ", ";
+    command << numberStr;
+    codeBuffer.emit(command.str());
     DataObj* dataObj = dynamic_cast<DataObj*>(node1);
-    return new NonTermByte(dataObj->getWorkReg());
-} // TODO: add error here
+    return new NonTermByte(resReg);
+}
 
 // Exp -> STRING
 
-Node* ExpAction7(RegManagment regManagment){
+Node* ExpAction7(RegManagment& regManagment, CodeBuffer& codeBuffer){
     return new NonTermStr();
 }
 
 // Exp -> TRUE
 
-Node* ExpAction8(RegManagment regManagment){
-    return new NonTermBool(regManagment.AllocateReg());
+Node* ExpAction8(RegManagment& regManagment, CodeBuffer& codeBuffer){
+    std::stringstream command;
+    WorkReg resReg = regManagment.AllocateReg();
+    command << "li ";
+    command << "$" << resReg << ", ";
+    command << "1";
+    codeBuffer.emit(command.str());
+    return new NonTermBool(resReg);
 }
 
 // Exp -> FALSE
 
-Node* ExpAction9(RegManagment regManagment){
-    return new NonTermBool(regManagment.AllocateReg());
+Node* ExpAction9(RegManagment& regManagment, CodeBuffer& codeBuffer){
+        std::stringstream command;
+    WorkReg resReg = regManagment.AllocateReg();
+    command << "li ";
+    command << "$" << resReg << ", ";
+    command << "1";
+    codeBuffer.emit(command.str());
+    return new NonTermBool(resReg);
 }
 
 // Exp -> Exp AND Exp
 
-Node* ExpAction10(Node* node1 , Node* node2 , Node* node3 , RegManagment regManagment){
+Node* ExpAction10(Node* node1 , Node* node2 , Node* node3 , RegManagment& regManagment, CodeBuffer& codeBuffer){
     if(!(NonTermBool::IsValidBoolExp(node1,node2,node3)))
         {
             output::errorMismatch(yylineno);
@@ -398,7 +432,7 @@ Node* ExpAction10(Node* node1 , Node* node2 , Node* node3 , RegManagment regMana
 
 // Exp -> Exp OR Exp
 
-Node* ExpAction11(Node* node1 , Node* node2 , Node* node3 , RegManagment regManagment){
+Node* ExpAction11(Node* node1 , Node* node2 , Node* node3 , RegManagment& regManagment, CodeBuffer& codeBuffer){
     if(!(NonTermBool::IsValidBoolExp(node1,node2,node3)))
         {
             output::errorMismatch(yylineno);
@@ -414,7 +448,7 @@ Node* ExpAction11(Node* node1 , Node* node2 , Node* node3 , RegManagment regMana
 
 // Exp -> Exp RELOP Exp
 
-Node* ExpAction12(Node* node1 , Node* node2 , Node* node3 , RegManagment regManagment){
+Node* ExpAction12(Node* node1 , Node* node2 , Node* node3 , RegManagment& regManagment, CodeBuffer& codeBuffer){
     if(!(NonTermBool::IsValidBoolExpRelExp(node1,node2,node3)))
         {
             output::errorMismatch(yylineno);
@@ -429,7 +463,7 @@ Node* ExpAction12(Node* node1 , Node* node2 , Node* node3 , RegManagment regMana
 
 // Exp -> NOT Exp
 
-Node* ExpAction13(Node* node1 , Node* node2 , RegManagment regManagment){
+Node* ExpAction13(Node* node1 , Node* node2 , RegManagment& regManagment, CodeBuffer& codeBuffer){
     if(!(NonTermBool::IsValidBoolExp(node2)))
         {
             output::errorMismatch(yylineno);
@@ -449,19 +483,20 @@ void CallToEnterGlobalScope(SymbolTable& symTable){
 
 void CallToExitGlobalScope(SymbolTable& symTable){
     output::endScope();
-    printIDsInGlobalScope(symTable);
+    //printIDsInGlobalScope(symTable);
     symTable.ExitScope();
 }
 
 void CallToEnterFunctionScope(SymbolTable& symTable){
     symTable.EnterScope();
+    symTable.StartEnteringFuncParas();
 }
 
 void CallToExitFunctionScope(SymbolTable& symTable){
     output::endScope();
     FunctionSymbol * funcSym = symTable.GetCurrentFunction();
-    output::printPreconditions(funcSym->GetName(),funcSym->GetPreCondNum());
-    printIDsInFunctionScope(symTable);
+    //output::printPreconditions(funcSym->GetName(),funcSym->GetPreCondNum());
+    //printIDsInFunctionScope(symTable);
     symTable.ExitScope();
 }
 
@@ -471,7 +506,7 @@ void CallToEnterInnerScope(SymbolTable& symTable){
 
 void CallToExitInnerScope(SymbolTable& symTable){
     output::endScope();
-    printIDsInInnerScope(symTable);
+    //printIDsInInnerScope(symTable);
     symTable.ExitScope();
 }
 
@@ -487,8 +522,9 @@ void ExitWhile(int &in_while_flag) {
 // assosiated with : FuncDecl -> RetType ID  <MARKER> LPAREN Formals  RPAREN  PreConditions 
 
 void addFunction(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3 ,
-        Node* node4 , Node* node5 , Node* node6 , Node* node7){
-            TypeNameEnum type = (dynamic_cast<Type*>(node1))->name;
+        Node* node4 , Node* node5 , Node* node6 , Node* node7 , CodeBuffer& codeBuffer){
+    symTable.StopEnteringFuncParas();
+    TypeNameEnum type = (dynamic_cast<Type*>(node1))->name;
     std::string name = (dynamic_cast<IdVal*>(node2))->GetVal();
     Symbol * sym = symTable.GetSymbol(name);
     if(sym!=NULL){
@@ -507,8 +543,9 @@ void addFunction(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3
         //     exit(0);
         // }
     }
+    FuncDeclToBuffer(name ,codeBuffer);
     symTable.AddFuncSymbol(name,0,TYPE_FUNC,typesList,type,num);
-} // check
+}
 
 
 void checkIfBoolInWhileIf(Node* node){
@@ -517,7 +554,7 @@ void checkIfBoolInWhileIf(Node* node){
         output::errorMismatch(yylineno);
         exit(0);
     }
-} // check
+}
 
 void printIDsInGlobalScope(SymbolTable& symTable){
     std::list<Symbol*> funcList = symTable.GetCurrentScope();
@@ -528,7 +565,7 @@ void printIDsInGlobalScope(SymbolTable& symTable){
         output::printID(funcSym->GetName(),0,output::makeFunctionType(retTypeStr,typesVec));
         
     }
-} // check
+}
 
 void printIDsInFunctionScope(SymbolTable& symTable){
     FunctionSymbol* funcSym = symTable.GetCurrentFunction();
@@ -554,8 +591,7 @@ void printIDsInFunctionScope(SymbolTable& symTable){
             }
         }
 
-} // check
-
+}
 
 void printIDsInInnerScope(SymbolTable& symTable){
     std::list<Symbol*> IDList = symTable.GetCurrentScope();
@@ -566,11 +602,82 @@ void printIDsInInnerScope(SymbolTable& symTable){
             memLoc -= funcSym->GetParametersList().size();
             output::printID((*it_scope)->GetName(),memLoc,TypeToString((*it_scope)->GetType()));
         }
-} // check
+}
 
 void mainCheck(SymbolTable& symTable){
     if(!(symTable.IsMainExists())){
         output::errorMainMissing();
         exit(0);
     }
+}
+
+//================================================= Buffer Related Functions ============================================================
+
+void BinopCmdToBuffer(WorkReg left , opTypeEnum op , WorkReg right , WorkReg res , RegManagment regManagment , CodeBuffer& codeBuffer){
+    std::string opStr;
+    switch(op){
+        case OP_SUM : opStr="addu";
+        case OP_SUB : opStr="subu";
+        case OP_MUL : opStr="mul";
+        case OP_DIV : opStr="div";
+    }
+    std::stringstream command;
+    command << opStr;
+    command << " $" << left << ",";
+    command << " $" << right << ",";
+    command << res;
+    codeBuffer.emit(command.str());
+}
+
+void FuncDeclToBuffer(std::string funcName , CodeBuffer& codeBuffer){
+    if(funcName != "main"){
+		codeBuffer.emit("func_" + funcName + ": ");
+	}
+	else{
+		codeBuffer.emit(funcName + ": ");
+	}
+	codeBuffer.emit("move $fp, $sp");
+}
+
+// Non-Bool
+
+void AddAndAssignNonBoolVarToBuffer(WorkReg reg  , RegManagment& regManagment , CodeBuffer& codeBuffer) {
+    codeBuffer.emit("subu $sp, $sp , 4");
+	codeBuffer.emit("sw $" + WorkRegEnumToStr(reg) + ", ($sp)");
+	regManagment.FreeReg(reg);
+}
+
+void AddNonBoolVarToBuffer(RegManagment& regManagment , CodeBuffer& codeBuffer) {
+    codeBuffer.emit("subu $sp, $sp , 4");
+	WorkReg tempReg = regManagment.AllocateReg();
+	codeBuffer.emit("li $" + WorkRegEnumToStr(tempReg) + ", 0");
+	codeBuffer.emit("sw $" + WorkRegEnumToStr(tempReg) + ", ($sp)");
+	regManagment.FreeReg(tempReg);
+}
+
+void AssignNonBoolVarToBuffer(WorkReg reg , int varOffset , RegManagment& regManagment , CodeBuffer& codeBuffer) {
+    std::stringstream str;
+    str << "sw " << WorkRegEnumToStr(reg) << ", " << varOffset << "($fp)";
+    codeBuffer.emit(str.str());
+	regManagment.FreeReg(reg);
+}
+
+// Bool
+
+void AddAndAssignBoolVarToBuffer(WorkReg reg  , RegManagment& regManagment , CodeBuffer& codeBuffer) {
+    codeBuffer.emit("subu $sp, $sp , 4");
+	codeBuffer.emit("sw $" + WorkRegEnumToStr(reg) + ", ($sp)");
+	regManagment.FreeReg(reg);
+}
+
+void AddBoolVarToBuffer(WorkReg reg  , RegManagment& regManagment , CodeBuffer& codeBuffer) {
+    codeBuffer.emit("subu $sp, $sp , 4");
+	codeBuffer.emit("sw $" + WorkRegEnumToStr(reg) + ", ($sp)");
+	regManagment.FreeReg(reg);
+}
+
+void AssignBoolVarToBuffer(WorkReg reg  , RegManagment& regManagment , CodeBuffer& codeBuffer) {
+    codeBuffer.emit("subu $sp, $sp , 4");
+	codeBuffer.emit("sw $" + WorkRegEnumToStr(reg) + ", ($sp)");
+	regManagment.FreeReg(reg);
 }
