@@ -5,6 +5,8 @@
 #include "SymbolTable.h"
 #include "RegManagment.h"
 #include <sstream>
+#include <iostream>
+#include <string>
 #include "bp.hpp"
 #include <stdlib.h> 
 
@@ -45,6 +47,10 @@ void StatmentAction5(int in_while_flag);
 void StatmentAction6(SymbolTable& symTable);
 //Statment -> RETURN Exp SC
 void StatmentAction7(SymbolTable& symTable , Node * node1 , Node * node2);
+//Statment -> RETURN Exp SC
+void StatmentAction8(SymbolTable& symTable , Node * node1 , Node * node2 , Node * node3);
+//Statement -> Call
+void StatmentAction9(SymbolTable& symTable , Node * node1);
 // Call -> ID LPAREN ExpList RPAREN
 Node* CallAction1(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3 , Node* node4);
 // Call -> ID LPAREN RPAREN
@@ -118,5 +124,9 @@ void printIDsInFunctionScope(SymbolTable& symTable);
 void printIDsInInnerScope(SymbolTable& symTable);
 
 void mainCheck(SymbolTable& symTable);
+
+//================================================= Buffer Related Functions ============================================================
+
+void AddFuncPrintPrintiToBuffer(CodeBuffer& codeBuffer);
 
 #endif

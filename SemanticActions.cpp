@@ -179,19 +179,23 @@ void StatmentAction7(SymbolTable& symTable , Node * node1 , Node * node2){
     }
 }
 
+//Statment -> RETURN Exp SC
+void StatmentAction8(SymbolTable& symTable , Node * node1 , Node * node2 , Node * node3){}
+
+//Statement -> Call
+void StatmentAction9(SymbolTable& symTable , Node * node1){}
+
 //ExpList -> Exp COMMA ExpList 
 
 Node* ExpListAction1(Node* node1 , Node* node2 , Node* node3) {
-        ParaListObj* paralist = dynamic_cast<ParaListObj*>(node3);
-        TypeNameEnum type = ExpToTypeName(node1);
-        return new ParaListObj(paralist,type);
+        return new ExpListObj(dynamic_cast<ExpListObj*>(node3),dynamic_cast<DataObj*>(node1));
 } 
 
 //ExpList -> Exp
 
 Node* ExpListAction2(Node* node1){
     TypeNameEnum type = ExpToTypeName(node1);
-    return new ParaListObj(ExpToTypeName(node1));
+    return new ExpListObj(dynamic_cast<DataObj*>(node1));
 }
 
 bool AreParaListsEqual(std::list<TypeNameEnum> list1 , std::list<TypeNameEnum> list2){
@@ -247,6 +251,12 @@ Node* CallAction1(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node
         //yyerror("error!");
     }
     FunctionSymbol* funcSym = dynamic_cast<FunctionSymbol*>(sym);
+    if(funcSym->GetName()=="print"){
+        
+    }
+    else if(funcSym->GetName()=="printi"){
+        
+    }
     return TypeNameToExp(funcSym->GetRetType(),regManagment.AllocateReg());
 }
 
@@ -629,6 +639,8 @@ void BinopCmdToBuffer(WorkReg left , opTypeEnum op , WorkReg right , WorkReg res
     codeBuffer.emit(command.str());
 }
 
+//====== Function decleration Related Functions ==============
+
 void FuncDeclToBuffer(std::string funcName , CodeBuffer& codeBuffer){
     if(funcName != "main"){
 		codeBuffer.emit("func_" + funcName + ": ");
@@ -638,6 +650,44 @@ void FuncDeclToBuffer(std::string funcName , CodeBuffer& codeBuffer){
 	}
 	codeBuffer.emit("move $fp, $sp");
 }
+
+void AddFuncPrintPrintiToBuffer(CodeBuffer& codeBuffer){
+    codeBuffer.emit("printi:");
+	codeBuffer.emit("lw $a0, 0($sp)");
+	codeBuffer.emit("li $v0, 1");
+	codeBuffer.emit("syscall");
+	codeBuffer.emit("jr $ra");
+
+	codeBuffer.emit("print:");
+	codeBuffer.emit("lw $a0, 0($sp)");
+	codeBuffer.emit("li $v0, 4");
+	codeBuffer.emit("syscall");
+	codeBuffer.emit("jr $ra");
+}
+
+void callPrintToBuffer(std::string text  , RegManagment& regManagment , CodeBuffer& codeBuffer){
+    static int stringCounter=0;
+    WorkReg reg = regManagment.AllocateReg();
+    std::stringstream counterToStr;
+    counterToStr << (stringCounter++);
+    std::string stringCounterStr = counterToStr.str();
+    std::stringstream label;
+    label << "_strData" << (stringCounter++) << "_: .asciiz ";
+    codeBuffer.emitData( "_strData" + stringCounterStr + "_: .asciiz " + "\"" + text + "\"");
+	codeBuffer.emit("subu $sp, $sp , 4");
+	codeBuffer.emit("la " + WorkRegEnumToStr(reg) + ", " + "_strData" + stringCounterStr + "_");
+	codeBuffer.emit("sw " + WorkRegEnumToStr(reg) + ", 0($sp)");
+	regManagment.FreeReg(reg);
+	codeBuffer.emit("jal print");
+	codeBuffer.emit("lw $ra, 4($sp)");
+	codeBuffer.emit("lw $fp, 8($sp)");
+	codeBuffer.emit("addu $sp, $sp , 12");
+	codeBuffer.emit("li $v0, 10");
+	codeBuffer.emit("syscall");
+
+}
+
+//=========== Variables Related Functions ====================
 
 // Non-Bool
 

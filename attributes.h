@@ -214,6 +214,20 @@ class NonTermVoid : public DataObj {
 
 //======================================Program Flow Classes=====================================//
 
+class ExpListObj : public Node {
+    std::list<DataObj*> ExpList;
+    public:
+        ExpListObj() {}
+        ExpListObj(DataObj* newExp) {
+            ExpList.push_front(newExp);
+        }
+        ExpListObj(ExpListObj * oldList , DataObj* newExp) : ExpList(oldList->ExpList) {
+            ExpList.push_front(newExp);
+        }
+        std::list<DataObj*> GetExpListObj() {return ExpList;}
+        int GetExpListObjSize() {return ExpList.size();}
+};
+
 class ParaListObj : public Node {
     std::list<TypeNameEnum> paraList;
     public:
