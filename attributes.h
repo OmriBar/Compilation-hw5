@@ -167,9 +167,11 @@ class NonTermBool : public DataObj {
 };
 
 class NonTermStr : public DataObj { //check whats up with that inside registers
+    private:
+    std::string label;
      public:
      NonTermStr();
-     NonTermStr(std::string name);
+     NonTermStr(std::string label);
 };
 
 class NonTermInt : public DataObj {

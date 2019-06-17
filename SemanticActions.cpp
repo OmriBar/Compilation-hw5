@@ -665,6 +665,18 @@ void AddFuncPrintPrintiToBuffer(CodeBuffer& codeBuffer){
 	codeBuffer.emit("jr $ra");
 }
 
+std::string SaveStringToData(std::string text  , RegManagment& regManagment , CodeBuffer& codeBuffer){
+    static int stringCounter=0;
+    WorkReg reg = regManagment.AllocateReg();
+    std::stringstream counterToStr;
+    counterToStr << (stringCounter++);
+    std::string stringCounterStr = counterToStr.str();
+    std::stringstream label;
+    label << "_strData" << (stringCounter++) << "_: .asciiz ";
+    codeBuffer.emitData( "_strData" + stringCounterStr + "_: .asciiz " + "\"" + text + "\"");
+    return label.str();
+}
+
 void callPrintToBuffer(std::string text  , RegManagment& regManagment , CodeBuffer& codeBuffer){
     static int stringCounter=0;
     WorkReg reg = regManagment.AllocateReg();
@@ -684,7 +696,6 @@ void callPrintToBuffer(std::string text  , RegManagment& regManagment , CodeBuff
 	codeBuffer.emit("addu $sp, $sp , 12");
 	codeBuffer.emit("li $v0, 10");
 	codeBuffer.emit("syscall");
-
 }
 
 //=========== Variables Related Functions ====================
@@ -718,16 +729,16 @@ void AddAndAssignBoolVarToBuffer(WorkReg reg  , RegManagment& regManagment , Cod
     codeBuffer.emit("subu $sp, $sp , 4");
 	codeBuffer.emit("sw $" + WorkRegEnumToStr(reg) + ", ($sp)");
 	regManagment.FreeReg(reg);
-}
+} // Nothing there
 
 void AddBoolVarToBuffer(WorkReg reg  , RegManagment& regManagment , CodeBuffer& codeBuffer) {
     codeBuffer.emit("subu $sp, $sp , 4");
 	codeBuffer.emit("sw $" + WorkRegEnumToStr(reg) + ", ($sp)");
 	regManagment.FreeReg(reg);
-}
+} // Nothing there
 
 void AssignBoolVarToBuffer(WorkReg reg  , RegManagment& regManagment , CodeBuffer& codeBuffer) {
     codeBuffer.emit("subu $sp, $sp , 4");
 	codeBuffer.emit("sw $" + WorkRegEnumToStr(reg) + ", ($sp)");
 	regManagment.FreeReg(reg);
-}
+} // Nothing there
