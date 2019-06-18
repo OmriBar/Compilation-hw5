@@ -53,9 +53,9 @@ void StatmentAction8(SymbolTable& symTable , Node * node1 , Node * node2 , Node 
 void StatmentAction9(SymbolTable& symTable , Node * node1);
 // Call -> ID LPAREN ExpList RPAREN
 Node* CallAction1(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3 , Node* node4
- , RegManagment regManagment , CodeBuffer& codeBuffer);
+ , RegManagment& regManagment , CodeBuffer& codeBuffer);
 // Call -> ID LPAREN RPAREN
-Node* CallAction2(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3, RegManagment regManagment);
+Node* CallAction2(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3, RegManagment& regManagment);
 //ExpList -> Exp COMMA ExpList 
 Node* ExpListAction1(Node* node1 , Node* node2 , Node* node3);
 //ExpList -> Exp
@@ -99,7 +99,7 @@ void CallToExitGlobalScope(SymbolTable& symTable);
 
 void CallToEnterFunctionScope(SymbolTable& symTable);
 
-void CallToExitFunctionScope(SymbolTable& symTable);
+void CallToExitFunctionScope(SymbolTable& symTable, CodeBuffer& codeBuffer);
 
 void CallToEnterInnerScope(SymbolTable& symTable);
 
@@ -128,7 +128,7 @@ void mainCheck(SymbolTable& symTable);
 
 //================================================= Buffer Related Functions ============================================================
 
-void BinopCmdToBuffer(WorkReg left , opTypeEnum op , WorkReg right , WorkReg res , RegManagment regManagment , CodeBuffer& codeBuffer);
+void BinopCmdToBuffer(WorkReg left , opTypeEnum op , WorkReg right , WorkReg res , RegManagment& regManagment , CodeBuffer& codeBuffer);
 
 //====== Function decleration Related Functions ==============
 
@@ -156,4 +156,9 @@ void AddBoolVarToBuffer(WorkReg reg  , RegManagment& regManagment , CodeBuffer& 
 
 void AssignBoolVarToBuffer(WorkReg reg  , RegManagment& regManagment , CodeBuffer& codeBuffer);
 
+void backUpTakenRegisters(RegManagment& regManagment,CodeBuffer& codeBuffer);
+
+void recoverTakenRegisters(RegManagment& regManagment,CodeBuffer& codeBuffer);
+
+void BinopCmdToBuffer(WorkReg left , opTypeEnum op , WorkReg right , WorkReg res , RegManagment& regManagment , CodeBuffer& codeBuffer);
 #endif

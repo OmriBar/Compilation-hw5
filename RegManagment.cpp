@@ -50,6 +50,8 @@ WorkReg RegManagment::AllocateReg(){
     if(FreeRegList.size()>0){
         WorkReg reg = FreeRegList.back();
         FreeRegList.pop_back();
+        //TakenRegList.pair_insert(reg,reg);
+        TakenRegList.insert(pair<WorkReg, WorkReg>(reg, reg));
         return reg;
     }
     else{
@@ -59,4 +61,5 @@ WorkReg RegManagment::AllocateReg(){
 
 void RegManagment::FreeReg(WorkReg reg) {
     FreeRegList.push_back(reg);
+    TakenRegList.erase(reg);
 }

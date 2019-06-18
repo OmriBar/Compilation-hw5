@@ -33,7 +33,7 @@ class BinaryOp : public Node {
         BinaryOp(char * _opType) {
             std::string strType(_opType);
             if(strType == "+"){
-                type = OP_SUB;
+                type = OP_SUM;
             }
             else if(strType == "-"){
                 type = OP_SUB;
@@ -169,11 +169,11 @@ class NonTermBool : public DataObj {
 
 class NonTermStr : public DataObj { //check whats up with that inside registers
     private:
-    std::string label;
+    std::string Label;
      public:
      NonTermStr();
      NonTermStr(std::string label);
-     std::string GetLabel() {return label;}
+     std::string GetLabel() {return Label;}
 };
 
 class NonTermInt : public DataObj {

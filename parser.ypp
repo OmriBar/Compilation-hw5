@@ -79,7 +79,7 @@ FuncDecl :
       LBRACE
         Statements 
       RBRACE 
-                {CallToExitFunctionScope(globalSymbolTable);}
+                {CallToExitFunctionScope(globalSymbolTable,codeBuffer);}
 ;
 
 

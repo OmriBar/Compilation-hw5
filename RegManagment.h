@@ -3,7 +3,7 @@
 
 #include <list>
 #include <string>
-
+#include <map>
 using namespace std;
 
 enum WorkReg { NONE , T8 , T9 ,
@@ -16,6 +16,7 @@ class RegManagment {
     private:
         std::list<WorkReg> FreeRegList;
     public:
+        std::map<WorkReg,WorkReg> TakenRegList;
         RegManagment();
         WorkReg AllocateReg();
         void FreeReg(WorkReg reg);

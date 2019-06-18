@@ -227,7 +227,7 @@ bool AreParaListsEqual(std::list<TypeNameEnum> list1 , std::list<TypeNameEnum> l
 // Call -> ID LPAREN ExpList RPAREN
 
 Node* CallAction1(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3 , Node* node4
- , RegManagment regManagment , CodeBuffer& codeBuffer){
+ , RegManagment& regManagment , CodeBuffer& codeBuffer){
     Symbol * sym = symTable.GetSymbol((dynamic_cast<IdVal*>(node1))->IdStr);
     if(sym == NULL || sym->GetType() != TYPE_FUNC ){
         output::errorUndefFunc(yylineno,(dynamic_cast<IdVal*>(node1))->IdStr);
@@ -271,6 +271,7 @@ Node* CallAction1(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node
         std::list<DataObj*> expList = (dynamic_cast<ExpListObj*>(node3))->GetExpListObj();
         expList.reverse();
         DataObj* data;
+        backUpTakenRegisters(regManagment,codeBuffer);
         for(std::list<DataObj*>::iterator it = expList.begin(); it != expList.end(); it++){
             data = *it;
             codeBuffer.emit("subu $sp, $sp, 4");
@@ -278,19 +279,39 @@ Node* CallAction1(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node
             regManagment.FreeReg(data->getWorkReg());
         }
         codeBuffer.emit("jal func_"+funcSym->GetName());
-        std::stringstream toStr;
-        toStr <<(expList.size()*4);
+        std::stringstream toStrSizeStack;
+        toStrSizeStack <<(expList.size()*4);
         codeBuffer.emit("lw $ra, 0(sp)");
         codeBuffer.emit("lw $fp, 4(sp)");
         codeBuffer.emit("addu $sp, $sp, 8");
-        codeBuffer.emit("addu $sp, $sp, " + toStr.str());
+        codeBuffer.emit("addu $sp, $sp, " + toStrSizeStack.str());
+        recoverTakenRegisters(regManagment,codeBuffer);
     }
     return TypeNameToExp(funcSym->GetRetType(),regManagment.AllocateReg());
 }
 
+void backUpTakenRegisters(RegManagment& regManagment,CodeBuffer& codeBuffer){
+    WorkReg reg;
+    for(std::map<WorkReg,WorkReg>::iterator it = regManagment.TakenRegList.begin(); it != regManagment.TakenRegList.end(); it++){
+        reg= it->first;
+        codeBuffer.emit("subu $sp, $sp, 4");
+        codeBuffer.emit("sw $" + WorkRegEnumToStr(reg) + ", 0(sp)");
+    }
+}
+
+void recoverTakenRegisters(RegManagment& regManagment,CodeBuffer& codeBuffer){
+    WorkReg reg;
+    for(std::map<WorkReg,WorkReg>::iterator it = regManagment.TakenRegList.begin(); it != regManagment.TakenRegList.end(); it++){
+        reg= it->first;
+        codeBuffer.emit("lw $"+ WorkRegEnumToStr(reg) +", 0(sp)");
+        codeBuffer.emit("addu $sp, $sp, 4");
+    }
+}
+
+
 // Call -> ID LPAREN RPAREN
 
-Node* CallAction2(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3 , RegManagment regManagment){
+Node* CallAction2(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3 , RegManagment& regManagment){
     Symbol * sym = symTable.GetSymbol((dynamic_cast<IdVal*>(node1))->IdStr);
     if(sym == NULL || sym->GetType() != TYPE_FUNC ){
         output::errorUndefFunc(yylineno,(dynamic_cast<IdVal*>(node1))->IdStr);
@@ -395,7 +416,7 @@ Node* ExpAction5(Node* node , RegManagment& regManagment, CodeBuffer& codeBuffer
     std::stringstream command;
     WorkReg resReg = regManagment.AllocateReg();
     command << "li ";
-    command << "$" << resReg << ", ";
+    command << "$" << WorkRegEnumToStr(resReg) << ", ";
     command << numberStr;
     codeBuffer.emit(command.str());
     return new NonTermInt(node,resReg);
@@ -531,9 +552,14 @@ void CallToEnterFunctionScope(SymbolTable& symTable){
     symTable.StartEnteringFuncParas();
 }
 
-void CallToExitFunctionScope(SymbolTable& symTable){
+void CallToExitFunctionScope(SymbolTable& symTable, CodeBuffer& codeBuffer){
     //output::endScope();
     FunctionSymbol * funcSym = symTable.GetCurrentFunction();
+    if(funcSym->GetName()=="main"){
+        codeBuffer.emit("move $sp, $fp");
+        codeBuffer.emit("li $v0, 10");
+		codeBuffer.emit("syscall");
+    }
     //output::printPreconditions(funcSym->GetName(),funcSym->GetPreCondNum());
     //printIDsInFunctionScope(symTable);
     symTable.ExitScope();
@@ -652,19 +678,19 @@ void mainCheck(SymbolTable& symTable){
 
 //================================================= Buffer Related Functions ============================================================
 
-void BinopCmdToBuffer(WorkReg left , opTypeEnum op , WorkReg right , WorkReg res , RegManagment regManagment , CodeBuffer& codeBuffer){
+void BinopCmdToBuffer(WorkReg left , opTypeEnum op , WorkReg right , WorkReg res , RegManagment& regManagment , CodeBuffer& codeBuffer){
     std::string opStr;
     switch(op){
-        case OP_SUM : opStr="addu";
-        case OP_SUB : opStr="subu";
-        case OP_MUL : opStr="mul";
-        case OP_DIV : opStr="div";
+        case OP_SUM : opStr="addu";break;
+        case OP_SUB : opStr="subu";break;
+        case OP_MUL : opStr="mul";break;
+        case OP_DIV : opStr="div";break;
     }
     std::stringstream command;
     command << opStr;
+    command << " $" << WorkRegEnumToStr(res) << ",";
     command << " $" << WorkRegEnumToStr(left) << ",";
-    command << " $" << WorkRegEnumToStr(right) << ",";
-    command << res;
+    command << " $" << WorkRegEnumToStr(right);
     codeBuffer.emit(command.str());
 }
 
@@ -701,8 +727,8 @@ std::string SaveStringToData(std::string text  , RegManagment& regManagment , Co
     counterToStr << (stringCounter++);
     std::string stringCounterStr = counterToStr.str();
     std::stringstream label;
-    label << "_strData" << (stringCounter++) << "_: .asciiz ";
-    codeBuffer.emitData( "_strData" + stringCounterStr + "_: .asciiz " + "\"" + text + "\"");
+    label << "_strData" << (stringCounter++) << "_";
+    codeBuffer.emitData( label.str() + ": .asciiz " + text);
     return label.str();
 }
 
@@ -714,7 +740,7 @@ WorkReg callPrintToBuffer(std::string label , RegManagment& regManagment , CodeB
 		codeBuffer.emit("jal print");
 		codeBuffer.emit("lw $ra, 4($sp)");
 		codeBuffer.emit("lw $fp, 8($sp)");
-		codeBuffer.emit("addu $sp, $sp , 12");
+		codeBuffer.emit("addu $sp, $sp, 12");
         return tempReg;
 }
 
