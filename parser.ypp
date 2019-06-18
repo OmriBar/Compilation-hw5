@@ -20,7 +20,7 @@
 
     RegManagment regManagment;
 
-    const CodeBuffer& codeBuffer;
+    CodeBuffer& codeBuffer = CodeBuffer::instance();
 
     int in_while_flag;
     bool main_flag = false;
@@ -110,9 +110,9 @@ Statements :
 Statement : 
     COMMENT                                                                                                                                 |
     LBRACE {CallToEnterInnerScope(globalSymbolTable);} Statements {CallToExitInnerScope(globalSymbolTable);} RBRACE                         | 
-    Type ID SC               {StatmentAction1(globalSymbolTable,$1,$2,$3);}                                                                 | 
-    Type ID ASSIGN Exp SC    {StatmentAction2(globalSymbolTable ,$1,$2,$3,$4,$5);}                                                          | 
-    ID ASSIGN Exp SC         {StatmentAction3(globalSymbolTable,$1,$2,$3,$4);}                                                              | 
+    Type ID SC               {StatmentAction1(globalSymbolTable,$1,$2,$3,regManagment,codeBuffer);}                                                                 | 
+    Type ID ASSIGN Exp SC    {StatmentAction2(globalSymbolTable ,$1,$2,$3,$4,$5,regManagment,codeBuffer);}                                                          | 
+    ID ASSIGN Exp SC         {StatmentAction3(globalSymbolTable,$1,$2,$3,$4,regManagment,codeBuffer);}                                                              | 
     IF_SUFFIX  %prec "then"                                                                                                                 |
     IF_SUFFIX ELSE {CallToEnterInnerScope(globalSymbolTable);} Statement {CallToExitInnerScope(globalSymbolTable);}                         |
     WHILE LPAREN {CallToEnterInnerScope(globalSymbolTable); EnterWhile(in_while_flag);} Exp {checkIfBoolInWhileIf($4);} RPAREN Statement
@@ -128,7 +128,7 @@ IF_SUFFIX : IF LPAREN {CallToEnterInnerScope(globalSymbolTable);} Exp {checkIfBo
 ;
 
 Call : 
-    ID LPAREN ExpList RPAREN { $$ = CallAction1(globalSymbolTable,$1,$2,$3,$4,regManagment); }                                |
+    ID LPAREN ExpList RPAREN { $$ = CallAction1(globalSymbolTable,$1,$2,$3,$4,regManagment,codeBuffer); }                                |
     ID LPAREN RPAREN         { $$ = CallAction2(globalSymbolTable,$1,$2,$3,regManagment);    }
 ;
 ExpList :
@@ -147,7 +147,7 @@ Exp :
     Call                { $$ = ExpAction4($1,regManagment,codeBuffer); }                         |  
     NUM                 { $$ = ExpAction5($1,regManagment,codeBuffer); }                         |
     NUM B               { $$ = ExpAction6($1,$2,regManagment,codeBuffer); }                      |
-    STRING              { $$ = ExpAction7(regManagment,codeBuffer); }                            |
+    STRING              { $$ = ExpAction7($1,regManagment,codeBuffer); }                         |
     TRUE                { $$ = ExpAction8(regManagment,codeBuffer); }                            |
     FALSE               { $$ = ExpAction9(regManagment,codeBuffer); }                            |
 	Exp AND Exp         { $$ = ExpAction10($1,$2,$3,regManagment,codeBuffer); }                  |
@@ -165,7 +165,6 @@ int main()
     currentOffset = 0;
     globalSymbolTable = SymbolTable();
     regManagment = RegManagment();
-    CodeBuffer = codeBuffer();
     in_while_flag = 0;
     codeBuffer.emit(".globl main");
     AddFuncPrintPrintiToBuffer(codeBuffer);

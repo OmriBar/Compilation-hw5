@@ -1,1 +1,4 @@
 .vscode/
+spim
+exceptions.s
+.gitignore

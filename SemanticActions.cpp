@@ -329,12 +329,11 @@ Node* TypeAction3(){
 
 // Exp -> LPAREN Exp RPAREN
 
-Node* ExpAction1(Node* node1 , Node* node2 , Node* node3) {
+Node* ExpAction1(Node* node1 , Node* node2 , Node* node3 , RegManagment& regManagment, CodeBuffer& codeBuffer) {
     TypeNameEnum type = ExpToTypeName(node2);
     if(type != TYPE_BOOL){
             output::errorMismatch(yylineno);
             exit(0);
-            //yyerror("error!");
         }
     DataObj * dataObj = dynamic_cast<DataObj*>(node2);
     return TypeNameToExp(TYPE_BOOL,dataObj->getWorkReg());
@@ -522,7 +521,7 @@ void CallToEnterGlobalScope(SymbolTable& symTable){
 }
 
 void CallToExitGlobalScope(SymbolTable& symTable){
-    output::endScope();
+    //output::endScope();
     //printIDsInGlobalScope(symTable);
     symTable.ExitScope();
 }
@@ -533,7 +532,7 @@ void CallToEnterFunctionScope(SymbolTable& symTable){
 }
 
 void CallToExitFunctionScope(SymbolTable& symTable){
-    output::endScope();
+    //output::endScope();
     FunctionSymbol * funcSym = symTable.GetCurrentFunction();
     //output::printPreconditions(funcSym->GetName(),funcSym->GetPreCondNum());
     //printIDsInFunctionScope(symTable);
@@ -545,7 +544,7 @@ void CallToEnterInnerScope(SymbolTable& symTable){
 }
 
 void CallToExitInnerScope(SymbolTable& symTable){
-    output::endScope();
+    //output::endScope();
     //printIDsInInnerScope(symTable);
     symTable.ExitScope();
 }
@@ -710,8 +709,8 @@ std::string SaveStringToData(std::string text  , RegManagment& regManagment , Co
 WorkReg callPrintToBuffer(std::string label , RegManagment& regManagment , CodeBuffer& codeBuffer){
         codeBuffer.emit("subu $sp, $sp , 4");
 		WorkReg tempReg = regManagment.AllocateReg();
-		codeBuffer.emit("la "+ WorkRegEnumToStr(tempReg) + ", " + label);
-		codeBuffer.emit("sw " + WorkRegEnumToStr(tempReg) + ", 0($sp)");
+		codeBuffer.emit("la $"+ WorkRegEnumToStr(tempReg) + ", " + label);
+		codeBuffer.emit("sw $" + WorkRegEnumToStr(tempReg) + ", 0($sp)");
 		codeBuffer.emit("jal print");
 		codeBuffer.emit("lw $ra, 4($sp)");
 		codeBuffer.emit("lw $fp, 8($sp)");
@@ -722,7 +721,7 @@ WorkReg callPrintToBuffer(std::string label , RegManagment& regManagment , CodeB
 
 void callPrintiToBuffer(WorkReg workReg , RegManagment& regManagment , CodeBuffer& codeBuffer){
         codeBuffer.emit("subu $sp, $sp , 4");
-		codeBuffer.emit("sw " + WorkRegEnumToStr(workReg) + ", 0($sp)");
+		codeBuffer.emit("sw $" + WorkRegEnumToStr(workReg) + ", 0($sp)");
 		codeBuffer.emit("jal printi");
 		codeBuffer.emit("lw $ra, 4($sp)");
 		codeBuffer.emit("lw $fp, 8($sp)");
@@ -750,7 +749,7 @@ void AddNonBoolVarToBuffer(RegManagment& regManagment , CodeBuffer& codeBuffer) 
 
 void AssignNonBoolVarToBuffer(WorkReg reg , int varOffset , RegManagment& regManagment , CodeBuffer& codeBuffer) {
     std::stringstream str;
-    str << "sw " << WorkRegEnumToStr(reg) << ", " << varOffset << "($fp)";
+    str << "sw $" << WorkRegEnumToStr(reg) << ", " << varOffset << "($fp)";
     codeBuffer.emit(str.str());
 	regManagment.FreeReg(reg);
 }

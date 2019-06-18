@@ -19,7 +19,6 @@ Node* TypeNameToExp(TypeNameEnum type , WorkReg workReg){
             case TYPE_INT: return new NonTermInt(workReg); break;
             case TYPE_BYTE: return new NonTermByte(workReg); break;
             case TYPE_BOOL: return new NonTermBool(workReg); break;
-            case TYPE_STR: return new NonTermStr(); break;
         }
     return NULL;  
 }

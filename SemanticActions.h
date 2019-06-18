@@ -34,11 +34,11 @@ Node* PreConditionsAction2(Node* node1 , Node* node2);
 // PreCondition -> PRECOND LPAREN Exp RPAREN
 void PreConditionAction1(Node* node1 , Node* node2 , Node* node3 , Node* node4);
 // Statment -> Type ID SC
-void StatmentAction1(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3);
+void StatmentAction1(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3 , RegManagment& regManagment , CodeBuffer& codeBuffer);
 // Statment -> Type ID ASSIGN Exp SC
-void StatmentAction2(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3, Node* node4, Node* node5);
+void StatmentAction2(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3, Node* node4, Node* node5 , RegManagment& regManagment , CodeBuffer& codeBuffer);
 //Statment -> ID ASSIGN Exp SC
-void StatmentAction3(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3, Node* node4);
+void StatmentAction3(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3, Node* node4 , RegManagment& regManagment , CodeBuffer& codeBuffer);
 //Statment -> BREAK SC
 void StatmentAction4(int in_while_flag);
 //Statment -> CONTINUE SC
@@ -52,9 +52,10 @@ void StatmentAction8(SymbolTable& symTable , Node * node1 , Node * node2 , Node 
 //Statement -> Call
 void StatmentAction9(SymbolTable& symTable , Node * node1);
 // Call -> ID LPAREN ExpList RPAREN
-Node* CallAction1(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3 , Node* node4);
+Node* CallAction1(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3 , Node* node4
+ , RegManagment regManagment , CodeBuffer& codeBuffer);
 // Call -> ID LPAREN RPAREN
-Node* CallAction2(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3);
+Node* CallAction2(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3, RegManagment regManagment);
 //ExpList -> Exp COMMA ExpList 
 Node* ExpListAction1(Node* node1 , Node* node2 , Node* node3);
 //ExpList -> Exp
@@ -66,31 +67,31 @@ Node* TypeAction2();
 // Type -> BOOL
 Node* TypeAction3();
 // Exp -> LPAREN Exp RPAREN
-Node* ExpAction1(Node* node1 , Node* node2 , Node* node3 , RegManagment RegManagment , CodeBuffer codeBuffer);
+Node* ExpAction1(Node* node1 , Node* node2 , Node* node3 , RegManagment& RegManagment , CodeBuffer& codeBuffer);
 // Exp -> Exp BINOP Exp
-Node* ExpAction2(Node* node1 , Node* node2 , Node* node3 , RegManagment RegManagment , CodeBuffer codeBuffer);
+Node* ExpAction2(Node* node1 , Node* node2 , Node* node3 , RegManagment& RegManagment , CodeBuffer& codeBuffer);
 // Exp -> ID
-Node* ExpAction3(SymbolTable& symTable , Node* node1  , RegManagment RegManagment , CodeBuffer codeBuffer);
+Node* ExpAction3(SymbolTable& symTable , Node* node1  , RegManagment& RegManagment , CodeBuffer& codeBuffer);
 // Exp -> Call
-Node* ExpAction4(Node* node , RegManagment RegManagment , CodeBuffer codeBuffer);
+Node* ExpAction4(Node* node , RegManagment& RegManagment , CodeBuffer& codeBuffer);
 // Exp -> NUM
-Node* ExpAction5(Node* node , RegManagment RegManagment , CodeBuffer codeBuffer);
+Node* ExpAction5(Node* node , RegManagment& RegManagment , CodeBuffer& codeBuffer);
 // Exp -> NUM B
-Node* ExpAction6(Node* node1 , Node* node2 , RegManagment RegManagment , CodeBuffer codeBuffer);
+Node* ExpAction6(Node* node1 , Node* node2 , RegManagment& RegManagment , CodeBuffer& codeBuffer);
 // Exp -> STRING
-Node* ExpAction7(RegManagment RegManagment , CodeBuffer codeBuffer);
+Node* ExpAction7(Node* node1 , RegManagment& regManagment, CodeBuffer& codeBuffer);
 // Exp -> TRUE
-Node* ExpAction8(RegManagment RegManagment , CodeBuffer codeBuffer);
+Node* ExpAction8(RegManagment& RegManagment , CodeBuffer& codeBuffer);
 // Exp -> FALSE
-Node* ExpAction9(RegManagment RegManagment , CodeBuffer codeBuffer);
+Node* ExpAction9(RegManagment& RegManagment , CodeBuffer& codeBuffer);
 // Exp -> Exp AND Exp
-Node* ExpAction10(Node* node1 , Node* node2 , Node* node3 , RegManagment RegManagment , CodeBuffer codeBuffer);
+Node* ExpAction10(Node* node1 , Node* node2 , Node* node3 , RegManagment& RegManagment , CodeBuffer& codeBuffer);
 // Exp -> Exp OR Exp
-Node* ExpAction11(Node* node1 , Node* node2 , Node* node3 , RegManagment RegManagment , CodeBuffer codeBuffer);
+Node* ExpAction11(Node* node1 , Node* node2 , Node* node3 , RegManagment& RegManagment , CodeBuffer& codeBuffer);
 // Exp -> Exp RELOP Exp
-Node* ExpAction12(Node* node1 , Node* node2 , Node* node3 , RegManagment RegManagment , CodeBuffer codeBuffer);
+Node* ExpAction12(Node* node1 , Node* node2 , Node* node3 , RegManagment& RegManagment , CodeBuffer& codeBuffer);
 // Exp -> NOT Exp
-Node* ExpAction13(Node* node1 , Node* node2 , RegManagment RegManagment , CodeBuffer codeBuffer);
+Node* ExpAction13(Node* node1 , Node* node2 , RegManagment& RegManagment , CodeBuffer& codeBuffer);
 
 void CallToEnterGlobalScope(SymbolTable& symTable);
 
@@ -127,6 +128,32 @@ void mainCheck(SymbolTable& symTable);
 
 //================================================= Buffer Related Functions ============================================================
 
+void BinopCmdToBuffer(WorkReg left , opTypeEnum op , WorkReg right , WorkReg res , RegManagment regManagment , CodeBuffer& codeBuffer);
+
+//====== Function decleration Related Functions ==============
+
+void FuncDeclToBuffer(std::string funcName , CodeBuffer& codeBuffer);
+
 void AddFuncPrintPrintiToBuffer(CodeBuffer& codeBuffer);
+
+std::string SaveStringToData(std::string text  , RegManagment& regManagment , CodeBuffer& codeBuffer);
+
+WorkReg callPrintToBuffer(std::string label , RegManagment& regManagment , CodeBuffer& codeBuffer);
+
+void callPrintiToBuffer(WorkReg workReg , RegManagment& regManagment , CodeBuffer& codeBuffer);
+
+//=========== Variables Related Functions ====================
+
+void AddAndAssignNonBoolVarToBuffer(WorkReg reg  , RegManagment& regManagment , CodeBuffer& codeBuffer);
+
+void AddNonBoolVarToBuffer(RegManagment& regManagment , CodeBuffer& codeBuffer);
+
+void AssignNonBoolVarToBuffer(WorkReg reg , int varOffset , RegManagment& regManagment , CodeBuffer& codeBuffer);
+
+void AddAndAssignBoolVarToBuffer(WorkReg reg  , RegManagment& regManagment , CodeBuffer& codeBuffer);
+
+void AddBoolVarToBuffer(WorkReg reg  , RegManagment& regManagment , CodeBuffer& codeBuffer);
+
+void AssignBoolVarToBuffer(WorkReg reg  , RegManagment& regManagment , CodeBuffer& codeBuffer);
 
 #endif
