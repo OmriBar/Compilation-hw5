@@ -150,11 +150,13 @@ Exp :
     STRING              { $$ = ExpAction7($1,regManagment,codeBuffer); }                         |
     TRUE                { $$ = ExpAction8(regManagment,codeBuffer); }                            |
     FALSE               { $$ = ExpAction9(regManagment,codeBuffer); }                            |
-	Exp AND Exp         { $$ = ExpAction10($1,$2,$3,regManagment,codeBuffer); }                  |
-    Exp OR Exp          { $$ = ExpAction11($1,$2,$3,regManagment,codeBuffer); }                  |
+	Exp AND M Exp         { $$ = ExpAction10($1,$2,$3,regManagment,codeBuffer); }                |
+    Exp OR M Exp          { $$ = ExpAction11($1,$2,$3,regManagment,codeBuffer); }                |
     Exp RELOP Exp       { $$ = ExpAction12($1,$2,$3,regManagment,codeBuffer); }                  |
     NOT Exp             { $$ = ExpAction13($1,$2,regManagment,codeBuffer); } 
 
+M :
+  { $$ = MMarkerAction(codeBuffer); }
     
 ;
 

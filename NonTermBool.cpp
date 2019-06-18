@@ -1,12 +1,15 @@
 #include "attributes.h"
 
-NonTermBool::NonTermBool(WorkReg dataReg) : DataObj(dataReg) {
+/*NonTermBool::NonTermBool(WorkReg dataReg) : DataObj(dataReg) {
 this->type = TYPE_BOOL;
 }
 
 NonTermBool::NonTermBool(std::string name , WorkReg dataReg) : DataObj(name,dataReg) {
 this->type = TYPE_BOOL;
-}
+}*/
+
+NonTermBool::NonTermBool(std::vector<int> truthList , std::vector<int> falseList) : 
+DataObj("",NONE) , TrueList(truthList) , FalseList(falseList) {}
 
 bool NonTermBool::IsValidBoolExp(Node * node1, Node * node2 , Node * node3){
     TypeNameEnum type1 = ExpToTypeName(node1);
@@ -31,3 +34,9 @@ bool NonTermBool::IsValidBoolExp(Node * node){
     return true;
 }
 
+std::vector<int> NonTermBool::GetTrueList() {
+    return TrueList;
+}
+std::vector<int> NonTermBool::GetFalseList(){
+    return FalseList;
+}

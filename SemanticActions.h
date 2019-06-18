@@ -84,10 +84,10 @@ Node* ExpAction7(Node* node1 , RegManagment& regManagment, CodeBuffer& codeBuffe
 Node* ExpAction8(RegManagment& RegManagment , CodeBuffer& codeBuffer);
 // Exp -> FALSE
 Node* ExpAction9(RegManagment& RegManagment , CodeBuffer& codeBuffer);
-// Exp -> Exp AND Exp
-Node* ExpAction10(Node* node1 , Node* node2 , Node* node3 , RegManagment& RegManagment , CodeBuffer& codeBuffer);
-// Exp -> Exp OR Exp
-Node* ExpAction11(Node* node1 , Node* node2 , Node* node3 , RegManagment& RegManagment , CodeBuffer& codeBuffer);
+// Exp -> Exp AND M Exp
+Node* ExpAction10(Node* node1 , Node* node2 , Node* node3 , Node* node4 , RegManagment& RegManagment , CodeBuffer& codeBuffer);
+// Exp -> Exp OR M Exp
+Node* ExpAction11(Node* node1 , Node* node2 , Node* node3 , Node* node4 , RegManagment& RegManagment , CodeBuffer& codeBuffer);
 // Exp -> Exp RELOP Exp
 Node* ExpAction12(Node* node1 , Node* node2 , Node* node3 , RegManagment& RegManagment , CodeBuffer& codeBuffer);
 // Exp -> NOT Exp
@@ -125,6 +125,8 @@ void printIDsInFunctionScope(SymbolTable& symTable);
 void printIDsInInnerScope(SymbolTable& symTable);
 
 void mainCheck(SymbolTable& symTable);
+
+Node * MMarkerAction(CodeBuffer& codeBuffer);
 
 //================================================= Buffer Related Functions ============================================================
 

@@ -18,6 +18,14 @@ class Node {
     virtual ~Node() {}
 };
 
+class NonTermMMarker : public Node {
+    private:
+    std::string Position;
+    public:
+    NonTermMMarker(std::string position) : Position(position) {}
+    std::string GetLabel () {return Position;}
+}
+
 //======================================token's Classes=====================================//
 
 class Type : public Node {
@@ -157,14 +165,19 @@ class DataObj : public Node {
 
 class NonTermBool : public DataObj {
     std::string name;
+    std::vector<int> TrueList;
+    std::vector<int> FalseList;
     bool IsVar;
     public:
     static bool IsValidBoolExp(Node * node);
     static bool IsValidBoolExp(Node * node1, Node * node2 , Node * node3);
     static bool IsValidBoolExpRelExp(Node * node1, Node * node2 , Node * node3);
-    NonTermBool(WorkReg dataReg);
-    NonTermBool(std::string name , WorkReg dataReg);
+    NonTermBool(std::vector<int> truthList , std::vector<int> falseLisr);
+    //NonTermBool(WorkReg dataReg);
+    //NonTermBool(std::string name , WorkReg dataReg);
     bool IsItVar() {return IsItVar();}
+    std::vector<int> GetTrueList();
+    std::vector<int> GetFalseList();
 };
 
 class NonTermStr : public DataObj { //check whats up with that inside registers
