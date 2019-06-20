@@ -20,11 +20,35 @@ class Node {
 
 class NonTermMMarker : public Node {
     private:
-    std::string Position;
+    std::string Label;
     public:
-    NonTermMMarker(std::string position) : Position(position) {}
-    std::string GetLabel () {return Position;}
-}
+    NonTermMMarker(std::string label) : Label(label) {}
+    std::string GetLabel () {return Label;}
+};
+
+class NonTermStatments : public Node {
+    private:
+    std::vector<int> BreakList;
+    std::vector<int> ContinueList;
+    public:
+    NonTermStatments(std::vector<int> breakList = std::vector<int>() , std::vector<int> continueList = std::vector<int>() ) :
+     BreakList(breakList) , ContinueList(continueList) {}
+    std::vector<int> GetBreakList() {return BreakList;}
+    std::vector<int> GetContinueList() {return ContinueList;}
+};
+
+class NonTermIfSuffix : public Node {
+    private:
+    std::string Label;
+    NonTermBool * BoolExp;
+    NonTermStatments* Statments;
+    public:
+    NonTermIfSuffix(std::string label , NonTermBool* boolExp , NonTermStatments* statments) :
+     Label(label) , BoolExp(boolExp) , Statments(statments) {}
+    std::string GetLabel () {return Label;}
+    NonTermBool* GetNonTermBool() {return BoolExp; }
+    NonTermStatments* GetStatments() {return Statments;}
+};
 
 //======================================token's Classes=====================================//
 

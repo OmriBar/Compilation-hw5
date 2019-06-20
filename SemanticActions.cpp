@@ -61,7 +61,7 @@ Node* PreConditionsAction1() {
     return NULL;
 }
 
-// PreConditions -> PreConditions PreCondition
+//PreConditions -> PreConditions PreCondition
 
 Node* PreConditionsAction2(Node* node1 , Node* node2) {
     return new PreCondListObj(dynamic_cast<PreCondListObj*>(node1));
@@ -77,9 +77,33 @@ void PreConditionAction1(Node* node1 , Node* node2 , Node* node3 , Node* node4) 
         //yyerror("");
     }
 }
+
+//Statements -> Statment
+
+Node * StatementsAction1(Node* node1){
+    return node1;
+
+}
+
+//Statements -> Statements Statement
+
+Node * StatementsAction2(Node* node1 , Node* node2 , CodeBuffer& codeBuffer){
+    NonTermStatments* nonTermStatments1 = dynamic_cast<NonTermStatments*>(node1);
+    NonTermStatments* nonTermStatments2 = dynamic_cast<NonTermStatments*>(node2);
+    std::vector<int> breakList = codeBuffer.merge(nonTermStatments1->GetBreakList(),nonTermStatments2->GetBreakList());
+    std::vector<int> continueList = codeBuffer.merge(nonTermStatments1->GetContinueList() , nonTermStatments2->GetContinueList());
+    return new NonTermStatments(breakList,continueList);
+
+}
+
+// Statment -> LBRACE <MARKER> Statements <MARKER> RBRACE
+Node* StatmentAction1(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3
+ , Node* node4 , Node* node5 , RegManagment& regManagment , CodeBuffer& codeBuffer){ }
+
 //Statment -> Type ID SC
 
-void StatmentAction1(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3 , RegManagment& regManagment , CodeBuffer& codeBuffer){
+Node* StatmentAction1(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3 ,
+ RegManagment& regManagment , CodeBuffer& codeBuffer){
     std::string name = (dynamic_cast<IdVal*>(node2))->IdStr;
     Symbol* sym = symTable.GetSymbol(name);
     if(sym != NULL){
@@ -89,11 +113,12 @@ void StatmentAction1(SymbolTable& symTable , Node* node1 , Node* node2, Node* no
     TypeNameEnum type = TypeNameToTypeEnum(node1);
     symTable.AddVariableSymbol(name , symTable.getCurrentIndex()+1 ,type);
     AddVarToBuffer(regManagment,codeBuffer);
+    return new NonTermStatments();
 }
 
 //Statment -> Type ID ASSIGN Exp SC
 
-void StatmentAction2(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3, Node* node4, Node* node5
+Node* StatmentAction2(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3, Node* node4, Node* node5
 , RegManagment& regManagment , CodeBuffer& codeBuffer){
     std::string name = (dynamic_cast<IdVal*>(node2))->IdStr;
     Symbol* sym = symTable.GetSymbol(name);
@@ -118,10 +143,12 @@ void StatmentAction2(SymbolTable& symTable , Node* node1 , Node* node2, Node* no
         AddAndAssignNonBoolVarToBuffer(reg,regManagment,codeBuffer);
     }
     regManagment.FreeReg(reg);
+    return new NonTermStatments();
 }
 
 //Statment -> ID ASSIGN Exp SC
-void StatmentAction3(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3, Node* node4
+
+Node* StatmentAction3(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3, Node* node4
         ,RegManagment& regManagment , CodeBuffer& codeBuffer){
     std::string name = (dynamic_cast<IdVal*>(node1))->IdStr;
     Symbol* sym = symTable.GetSymbol(name);
@@ -146,42 +173,84 @@ void StatmentAction3(SymbolTable& symTable , Node* node1 , Node* node2, Node* no
         AssignNonBoolVarToBuffer(reg,varOffset,regManagment,codeBuffer);
     }
     regManagment.FreeReg(reg);
+    return new NonTermStatments();
+}
+
+//Statment -> IF_SUFFIX
+
+Node* StatmentAction4(Node* node1 , RegManagment& regManagment , CodeBuffer& codeBuffer){
+    NonTermIfSuffix* nonTermIfSuffix = dynamic_cast<NonTermIfSuffix*>(node1);
+    NonTermBool* nonTermBool = nonTermIfSuffix->GetNonTermBool();
+    NonTermStatments* statments = nonTermIfSuffix->GetStatments();
+    std::string label1 = nonTermIfSuffix->GetLabel();
+    std::string label2 = codeBuffer.genLabel();
+    codeBuffer.bpatch(nonTermBool->GetTrueList(),label1);
+    codeBuffer.bpatch(nonTermBool->GetFalseList(),label2);
+    return new NonTermStatments();
+} // done
+
+//Statment -> IF_SUFFIX ELSE <Marker> M Statement
+
+Node* StatmentAction5(Node* node1 , Node* node2, Node* node3, Node* node4 , Node* node5 , Node* node6
+ , RegManagment& regManagment , CodeBuffer& codeBuffer){
+    NonTermIfSuffix* nonTermIfSuffix = dynamic_cast<NonTermIfSuffix*>(node1);
+    NonTermBool* nonTermBool = nonTermIfSuffix->GetNonTermBool();
+    std::string label1 = nonTermIfSuffix->GetLabel();
+    std::string label2 = (dynamic_cast<NonTermMMarker*>(node4))->GetLabel();
+    codeBuffer.bpatch(nonTermBool->GetTrueList(),label1);
+    codeBuffer.bpatch(nonTermBool->GetFalseList(),label2);
+    return new NonTermStatments();
+} // done
+
+// Statment -> WHILE LPAREN <MARKER> Exp <MARKER> RPAREN M Statement
+
+Node* StatmentAction6(Node* node1 , Node* node2, Node* node3, Node* node4 , Node* node5 
+, Node* node6 , Node* node7 , Node* node8, RegManagment& regManagment , CodeBuffer& codeBuffer){
+
 }
 
 //Statment -> BREAK SC 
 
-void StatmentAction4(int in_while_flag){
+Node* StatmentAction6(int in_while_flag , CodeBuffer& codeBuffer){
     if(in_while_flag<=0){
      output::errorUnexpectedBreak(yylineno);
      exit(0);
-     //yyerror("error!");
     }
+    int breakPoint = codeBuffer.emit("j ");
+    std::vector<int> breakList = codeBuffer.makelist(breakPoint);
+    std::vector<int> continueList = std::vector<int>();
+    return new NonTermStatments(breakList,continueList); 
+    
 }
 
 //Statment -> CONTINUE SC
 
-void StatmentAction5(int in_while_flag){
+Node* StatmentAction7(int in_while_flag , CodeBuffer& codeBuffer){
     if(in_while_flag<=0){
      output::errorUnexpectedContinue(yylineno);
      exit(0);
-     //yyerror("error!");
     }
+    int continuePoint = codeBuffer.emit("j ");
+    std::vector<int> breakList = std::vector<int>();
+    std::vector<int> continueList = codeBuffer.makelist(continuePoint);
+    return new NonTermStatments(breakList,continueList); 
 }
 
 //Statment -> RETURN SC
 
-void StatmentAction6(SymbolTable& symTable){
+Node* StatmentAction8(SymbolTable& symTable){
     FunctionSymbol* funcSym = symTable.GetCurrentFunction();
     TypeNameEnum type = funcSym->GetRetType();
     if(!(type==TYPE_VOID)){
         output::errorMismatch(yylineno);
         exit(0);
     }
+    return new NonTermStatments();
 }
 
 //Statment -> RETURN Exp SC
 
-void StatmentAction7(SymbolTable& symTable , Node * node1 , Node * node2){
+Node* StatmentAction9(SymbolTable& symTable , Node * node1 , Node * node2){
     TypeNameEnum currtype = ExpToTypeName(node2);
     FunctionSymbol* funcSym = symTable.GetCurrentFunction();
     TypeNameEnum definedType = funcSym->GetRetType();
@@ -190,15 +259,30 @@ void StatmentAction7(SymbolTable& symTable , Node * node1 , Node * node2){
         output::errorMismatch(yylineno);
         exit(0);
     }
+    return new NonTermStatments();
 }
 
 //Statment -> RETURN Exp SC
 
-void StatmentAction8(SymbolTable& symTable , Node * node1 , Node * node2 , Node * node3){}
+void StatmentAction10(SymbolTable& symTable , Node * node1 , Node * node2 , Node * node3){}
 
 //Statement -> Call
 
-void StatmentAction9(SymbolTable& symTable , Node * node1){}
+void StatmentAction11(SymbolTable& symTable , Node * node1){}
+
+//IF_SUFFIX -> IF LPAREN <Marker> Exp <Marker> RPAREN M Statement
+
+Node* IfActionAction(Node * node1 , Node * node2 , Node * node3 , Node * node4 , Node * node5 , Node * node6 ,Node * node7, Node * node8
+ , RegManagment& regManagment , CodeBuffer& codeBuffer){
+    if(dynamic_cast<NonTermBool*>(node7)==NULL){
+        output::errorMismatch(yylineno);
+            exit(0);
+    }
+    NonTermStatments* statments = dynamic_cast<NonTermStatments*>(node8);
+    NonTermBool* boolExp = dynamic_cast<NonTermBool*>(node7);
+    NonTermMMarker * nonTermMMarker = dynamic_cast<NonTermMMarker*>(node4);
+    return new NonTermIfSuffix(nonTermMMarker->GetLabel(),boolExp,statments);
+}
 
 //ExpList -> Exp COMMA ExpList 
 
@@ -508,7 +592,6 @@ Node* ExpAction11(Node* node1 , Node* node2 , Node* node3 , Node* node4, RegMana
         {
             output::errorMismatch(yylineno);
             exit(0);
-             //yyerror("error!");
         }
     NonTermBool* left = dynamic_cast<NonTermBool*>(node1);
     NonTermBool* right = dynamic_cast<NonTermBool*>(node4);
@@ -527,9 +610,11 @@ Node* ExpAction12(Node* node1 , Node* node2 , Node* node3 , RegManagment& regMan
             output::errorMismatch(yylineno);
             exit(0);
         }
-    NonTermBool* nonTermBool = dynamic_cast<NonTermBool*>(node1);
-    NonTermBool* nonTermBool = dynamic_cast<NonTermBool*>(node3);
-
+    WorkReg leftReg = (dynamic_cast<DataObj*>(node1))->getWorkReg();
+    WorkReg rightReg =(dynamic_cast<DataObj*>(node3))->getWorkReg();
+    opTypeEnum op = (dynamic_cast<RelativeOp*>(node2))->getType();
+    NonTermBool* nonTermBool = RelopCmdToBuffer(leftReg,op,rightReg,regManagment,codeBuffer);
+    return nonTermBool;
 }
 
 // Exp -> NOT Exp
@@ -708,6 +793,30 @@ void BinopCmdToBuffer(WorkReg left , opTypeEnum op , WorkReg right , WorkReg res
     command << " $" << WorkRegEnumToStr(left) << ",";
     command << " $" << WorkRegEnumToStr(right);
     codeBuffer.emit(command.str());
+}
+NonTermBool* RelopCmdToBuffer(WorkReg left , opTypeEnum op , WorkReg right, RegManagment& regManagment , CodeBuffer& codeBuffer){
+    int trueListAddr;
+    int falseListAddr;
+    std::string opStr;
+    switch(op){
+        case OP_EQU : opStr="beq";break;
+        case OP_NEQ : opStr="bne";break;
+        case OP_LEFTBIGEQ : opStr="bge";break;
+        case OP_LEFTBIG : opStr="bgt";break;
+        case OP_RIGHTBIGEQ : opStr="ble"; break;
+        case OP_RIGHTBIG : opStr="blt"; break;
+    }
+    std::stringstream command1;
+    command1 << opStr;
+    command1 << " $" << WorkRegEnumToStr(res) << ",";
+    command1 << " $" << WorkRegEnumToStr(left) << ",";
+    std::stringstream command2;
+    command2 << "j ";
+    trueListAddr = codeBuffer.emit(command1.str());
+    falseListAddr = codeBuffer.emit(command2.str());
+    std::vector<int> trueList = codeBuffer.makelist(trueListAddr);
+    std::vector<int> falseList = codeBuffer.makelist(falseListAddr);
+    return new NonTermBool(trueList,falseList);
 }
 
 //====== Function decleration Related Functions ==============

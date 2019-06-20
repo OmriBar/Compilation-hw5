@@ -33,24 +33,39 @@ Node* PreConditionsAction1();
 Node* PreConditionsAction2(Node* node1 , Node* node2);
 // PreCondition -> PRECOND LPAREN Exp RPAREN
 void PreConditionAction1(Node* node1 , Node* node2 , Node* node3 , Node* node4);
+// Statment -> LBRACE <MARKER> Statements <MARKER> RBRACE
+Node* StatmentAction1(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3
+ , Node* node4 , Node* node5 , RegManagment& regManagment , CodeBuffer& codeBuffer);
 // Statment -> Type ID SC
-void StatmentAction1(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3 , RegManagment& regManagment , CodeBuffer& codeBuffer);
+Node* StatmentAction2(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3
+ , RegManagment& regManagment , CodeBuffer& codeBuffer);
 // Statment -> Type ID ASSIGN Exp SC
-void StatmentAction2(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3, Node* node4, Node* node5 , RegManagment& regManagment , CodeBuffer& codeBuffer);
+Node* StatmentAction2(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3
+, Node* node4, Node* node5 , RegManagment& regManagment , CodeBuffer& codeBuffer);
 //Statment -> ID ASSIGN Exp SC
-void StatmentAction3(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3, Node* node4 , RegManagment& regManagment , CodeBuffer& codeBuffer);
+Node* StatmentAction3(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3
+, Node* node4 , RegManagment& regManagment , CodeBuffer& codeBuffer);
+//Statment -> IF_SUFFIX
+Node* StatmentAction4(Node* node1 , RegManagment& regManagment , CodeBuffer& codeBuffer);
+//Statment -> IF_SUFFIX ELSE <Marker> M Statement
+Node* StatmentAction5(Node* node1 , Node* node2, Node* node3, Node* node4 , Node* node5 , RegManagment& regManagment , CodeBuffer& codeBuffer);
+// Statment -> WHILE LPAREN <MARKER> Exp <MARKER> RPAREN M Statement
+Node* StatmentAction6(Node* node1 , Node* node2, Node* node3, Node* node4 , Node* node5 
+, Node* node6 , Node* node7 , Node* node8, RegManagment& regManagment , CodeBuffer& codeBuffer);
 //Statment -> BREAK SC
-void StatmentAction4(int in_while_flag);
+Node* StatmentAction7(int in_while_flag , CodeBuffer& codeBuffer);
 //Statment -> CONTINUE SC
-void StatmentAction5(int in_while_flag);
+Node* StatmentAction8(int in_while_flag , CodeBuffer& codeBuffer);
 //Statment -> RETURN SC
-void StatmentAction6(SymbolTable& symTable);
+Node* StatmentAction9(SymbolTable& symTable);
 //Statment -> RETURN Exp SC
-void StatmentAction7(SymbolTable& symTable , Node * node1 , Node * node2);
+Node* StatmentAction9(SymbolTable& symTable , Node * node1 , Node * node2);
 //Statment -> RETURN Exp SC
-void StatmentAction8(SymbolTable& symTable , Node * node1 , Node * node2 , Node * node3);
+void StatmentAction10(SymbolTable& symTable , Node * node1 , Node * node2 , Node * node3);
 //Statement -> Call
-void StatmentAction9(SymbolTable& symTable , Node * node1);
+void StatmentAction11(SymbolTable& symTable , Node * node1);
+//IF_SUFFIX -> IF LPAREN <Marker> Exp <Marker> RPAREN M Statement
+Node* IfActionAction(Node * node1);
 // Call -> ID LPAREN ExpList RPAREN
 Node* CallAction1(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3 , Node* node4
  , RegManagment& regManagment , CodeBuffer& codeBuffer);
