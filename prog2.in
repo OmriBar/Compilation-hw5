@@ -1,11 +1,11 @@
 void main()
 {
-	bool a1 = true;
 	bool a2 = true;
-    if(a1 and a2){
+    if(a2){
 		print("print this\n");
 	}
 	else{
-	print("dont print this\n");
+		print("dont print this\n");
 	}
+	
 }

@@ -59,6 +59,7 @@ WorkReg RegManagment::AllocateReg(){
     }
 }
 
+
 void RegManagment::FreeReg(WorkReg reg) {
     FreeRegList.push_back(reg);
     TakenRegList.erase(reg);

@@ -141,15 +141,15 @@ Node* StatmentAction3(SymbolTable& symTable , Node* node1 , Node* node2, Node* n
     }
     TypeNameEnum type = TypeNameToTypeEnum(node1);
     symTable.AddVariableSymbol(name , symTable.getCurrentIndex()+1 ,type);
-    WorkReg reg = (dynamic_cast<DataObj*>(node4))->getWorkReg();
     if(type==TYPE_BOOL){
         NonTermBool* nonTermBool = (dynamic_cast<NonTermBool*>(node4));
         AddAndAssignBoolVarToBuffer(nonTermBool,regManagment,codeBuffer);
     }
     else{
+        WorkReg reg = (dynamic_cast<DataObj*>(node4))->getWorkReg();
         AddAndAssignNonBoolVarToBuffer(reg,regManagment,codeBuffer);
+        regManagment.FreeReg(reg);
     }
-    regManagment.FreeReg(reg);
     return new NonTermStatments();
 }
 
@@ -171,7 +171,7 @@ Node* StatmentAction4(SymbolTable& symTable , Node* node1 , Node* node2, Node* n
         //yyerror("error!");
     }
     WorkReg reg = (dynamic_cast<DataObj*>(node3))->getWorkReg();
-    int varOffset = sym->GetIndex();
+    int varOffset = sym->GetIndex() * 4;
     if(type==TYPE_BOOL){
         NonTermBool* nonTermBool = (dynamic_cast<NonTermBool*>(node3));
         AssignBoolVarToBuffer(nonTermBool,varOffset,regManagment,codeBuffer);
@@ -189,10 +189,13 @@ Node* StatmentAction5(Node* node1 , RegManagment& regManagment , CodeBuffer& cod
     NonTermIfSuffix* nonTermIfSuffix = dynamic_cast<NonTermIfSuffix*>(node1);
     NonTermBool* nonTermBool = nonTermIfSuffix->GetNonTermBool();
     NonTermStatments* statments = nonTermIfSuffix->GetStatments();
+    int JumpToEndPos = nonTermIfSuffix->GetJumpToEndPos();
     std::string label1 = nonTermIfSuffix->GetLabel();
     std::string label2 = codeBuffer.genLabel();
     codeBuffer.bpatch(nonTermBool->GetTrueList(),label1);
     codeBuffer.bpatch(nonTermBool->GetFalseList(),label2);
+    std::string label3 = codeBuffer.genLabel();
+    codeBuffer.bpatch(codeBuffer.makelist(JumpToEndPos),label3);
     return new NonTermStatments();
 }
 
@@ -553,7 +556,7 @@ Node* ExpAction3(SymbolTable& symTable , Node* node1 , RegManagment& regManagmen
         output::errorUndef(yylineno,name);
         exit(0);
     }
-    int offset = sym->GetIndex();
+    int offset = sym->GetIndex() * 4;
     std::stringstream toStr;
     toStr << offset;
     WorkReg reg = regManagment.AllocateReg();
