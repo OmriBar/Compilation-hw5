@@ -82,12 +82,17 @@ void PreConditionAction1(Node* node1 , Node* node2 , Node* node3 , Node* node4) 
 
 Node * StatementsAction1(Node* node1){
     return node1;
-
 }
+
+// Statment -> LBRACE <MARKER> Statements <MARKER> RBRACE
+Node* StatmentAction1(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3
+ , Node* node4 , Node* node5 , RegManagment& regManagment , CodeBuffer& codeBuffer){
+     return node3;
+ }
 
 //Statements -> Statements Statement
 
-Node * StatementsAction2(Node* node1 , Node* node2 , CodeBuffer& codeBuffer){
+Node* StatementsAction2(Node* node1 , Node* node2 , CodeBuffer& codeBuffer){
     NonTermStatments* nonTermStatments1 = dynamic_cast<NonTermStatments*>(node1);
     NonTermStatments* nonTermStatments2 = dynamic_cast<NonTermStatments*>(node2);
     std::vector<int> breakList = codeBuffer.merge(nonTermStatments1->GetBreakList(),nonTermStatments2->GetBreakList());
@@ -98,7 +103,7 @@ Node * StatementsAction2(Node* node1 , Node* node2 , CodeBuffer& codeBuffer){
 
 // Statment -> LBRACE <MARKER> Statements <MARKER> RBRACE
 Node* StatmentAction1(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3
- , Node* node4 , Node* node5 , RegManagment& regManagment , CodeBuffer& codeBuffer){ }
+ , Node* node4 , Node* node5 , RegManagment& regManagment , CodeBuffer& codeBuffer){ } // TODO
 
 //Statment -> Type ID SC
 
@@ -187,7 +192,7 @@ Node* StatmentAction4(Node* node1 , RegManagment& regManagment , CodeBuffer& cod
     codeBuffer.bpatch(nonTermBool->GetTrueList(),label1);
     codeBuffer.bpatch(nonTermBool->GetFalseList(),label2);
     return new NonTermStatments();
-} // done
+}
 
 //Statment -> IF_SUFFIX ELSE <Marker> M Statement
 
@@ -200,14 +205,25 @@ Node* StatmentAction5(Node* node1 , Node* node2, Node* node3, Node* node4 , Node
     codeBuffer.bpatch(nonTermBool->GetTrueList(),label1);
     codeBuffer.bpatch(nonTermBool->GetFalseList(),label2);
     return new NonTermStatments();
-} // done
+} 
 
 // Statment -> WHILE LPAREN <MARKER> Exp <MARKER> RPAREN M Statement
 
 Node* StatmentAction6(Node* node1 , Node* node2, Node* node3, Node* node4 , Node* node5 
 , Node* node6 , Node* node7 , Node* node8, RegManagment& regManagment , CodeBuffer& codeBuffer){
+    NonTermStatments* nonTermStatments = dynamic_cast<NonTermStatments*>(node8);
+    NonTermBool* boolExp = dynamic_cast<NonTermBool*>(node4);
+    NonTermMMarker* nonTermMMarker = dynamic_cast<NonTermMMarker*>(node7);
+    std::string label1 = nonTermMMarker->GetLabel();
+    std::string label2 = codeBuffer.genLabel();
+    int endWhileBlockPos = codeBuffer.emit("j "+label2);
+    std::string label3 = codeBuffer.genLabel();
+    
+    codeBuffer.bpatch(codeBuffer.makelist(endWhileBlockPos),label1);
+    //codeBuffer.bpatch(codebu)
 
-}
+
+} // TODO
 
 //Statment -> BREAK SC 
 
@@ -264,7 +280,7 @@ Node* StatmentAction9(SymbolTable& symTable , Node * node1 , Node * node2){
 
 //Statment -> RETURN Exp SC
 
-void StatmentAction10(SymbolTable& symTable , Node * node1 , Node * node2 , Node * node3){}
+void StatmentAction10(SymbolTable& symTable , Node * node1 , Node * node2 , Node * node3){} // TODO
 
 //Statement -> Call
 
@@ -808,7 +824,7 @@ NonTermBool* RelopCmdToBuffer(WorkReg left , opTypeEnum op , WorkReg right, RegM
     }
     std::stringstream command1;
     command1 << opStr;
-    command1 << " $" << WorkRegEnumToStr(res) << ",";
+    command1 << " $" << WorkRegEnumToStr(right) << ",";
     command1 << " $" << WorkRegEnumToStr(left) << ",";
     std::stringstream command2;
     command2 << "j ";
