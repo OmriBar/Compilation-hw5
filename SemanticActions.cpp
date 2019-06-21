@@ -367,6 +367,7 @@ Node* CallAction1(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node
         //yyerror("error!");
     }
     FunctionSymbol* funcSym = dynamic_cast<FunctionSymbol*>(sym);
+    WorkReg reg;
     if(funcSym->GetName()=="print"){
         std::list<DataObj*> expList = (dynamic_cast<ExpListObj*>(node3))->GetExpListObj();
         NonTermStr* nonTermStr = dynamic_cast<NonTermStr*>(expList.back());
@@ -394,13 +395,15 @@ Node* CallAction1(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node
         codeBuffer.emit("jal func_"+funcSym->GetName());
         std::stringstream toStrSizeStack;
         toStrSizeStack <<(expList.size()*4);
-        codeBuffer.emit("lw $ra, 0(sp)");
-        codeBuffer.emit("lw $fp, 4(sp)");
-        codeBuffer.emit("addu $sp, $sp, 8");
+        reg = regManagment.AllocateReg();
+        codeBuffer.emit("lw "+ WorkRegEnumToStr(reg) +", 0(sp)");
+        codeBuffer.emit("lw $ra, 4(sp)");
+        codeBuffer.emit("lw $fp, 8(sp)");
+        codeBuffer.emit("addu $sp, $sp, 12");
         codeBuffer.emit("addu $sp, $sp, " + toStrSizeStack.str());
         recoverTakenRegisters(regManagment,codeBuffer);
     }
-    return TypeNameToExp(funcSym->GetRetType(),regManagment.AllocateReg());
+    return TypeNameToExp(funcSym->GetRetType(),reg);
 }
 
 void backUpTakenRegisters(RegManagment& regManagment,CodeBuffer& codeBuffer){
@@ -424,23 +427,30 @@ void recoverTakenRegisters(RegManagment& regManagment,CodeBuffer& codeBuffer){
 
 // Call -> ID LPAREN RPAREN
 
-Node* CallAction2(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3 , RegManagment& regManagment){
+Node* CallAction2(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3 , RegManagment& regManagment, CodeBuffer& codeBuffer){
     Symbol * sym = symTable.GetSymbol((dynamic_cast<IdVal*>(node1))->IdStr);
     if(sym == NULL || sym->GetType() != TYPE_FUNC ){
         output::errorUndefFunc(yylineno,(dynamic_cast<IdVal*>(node1))->IdStr);
         exit(0);
-        //yyerror("error!");
     }
+    WorkReg reg;
     std::list<TypeNameEnum> symParas = (dynamic_cast<FunctionSymbol*>(sym))->GetParametersList(); 
     std::list<TypeNameEnum> expListparas = std::list<TypeNameEnum>();
     if(symParas != expListparas){
         std::vector<string> vector_symParas = ParaListToStrings(symParas);
         output::errorPrototypeMismatch(yylineno,(dynamic_cast<IdVal*>(node1))->IdStr,vector_symParas);
         exit(0);
-        //yyerror("error!");
     }
     FunctionSymbol* funcSym = dynamic_cast<FunctionSymbol*>(sym);
-    return TypeNameToExp(funcSym->GetRetType(),regManagment.AllocateReg());
+    backUpTakenRegisters(regManagment,codeBuffer);
+    codeBuffer.emit("jal func_"+funcSym->GetName());
+    reg = regManagment.AllocateReg();
+    codeBuffer.emit("lw "+ WorkRegEnumToStr(reg) +", 0(sp)");
+    codeBuffer.emit("lw $ra, 4(sp)");
+    codeBuffer.emit("lw $fp, 8(sp)");
+    codeBuffer.emit("addu $sp, $sp, 12");
+    recoverTakenRegisters(regManagment,codeBuffer);
+    return TypeNameToExp(funcSym->GetRetType(),reg);
 }
 
 // Type -> INT
