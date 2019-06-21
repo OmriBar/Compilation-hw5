@@ -1,0 +1,6 @@
+void main()
+{
+    if(true){
+		print("print this\n");
+	}
+}

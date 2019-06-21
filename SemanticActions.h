@@ -34,8 +34,7 @@ Node* PreConditionsAction2(Node* node1 , Node* node2);
 // PreCondition -> PRECOND LPAREN Exp RPAREN
 void PreConditionAction1(Node* node1 , Node* node2 , Node* node3 , Node* node4);
 // Statment -> LBRACE <MARKER> Statements <MARKER> RBRACE
-Node* StatmentAction1(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3
- , Node* node4 , Node* node5 , RegManagment& regManagment , CodeBuffer& codeBuffer);
+Node* StatmentAction1(Node * node);
 // Statment -> Type ID SC
 Node* StatmentAction2(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3
  , RegManagment& regManagment , CodeBuffer& codeBuffer);
@@ -48,7 +47,7 @@ Node* StatmentAction4(SymbolTable& symTable , Node* node1 , Node* node2, Node* n
 //Statment -> IF_SUFFIX
 Node* StatmentAction5(Node* node1 , RegManagment& regManagment , CodeBuffer& codeBuffer);
 //Statment -> IF_SUFFIX ELSE <Marker> M Statement
-Node* StatmentAction6(Node* node1 , Node* node2, Node* node3, Node* node4 , Node* node5 , RegManagment& regManagment , CodeBuffer& codeBuffer);
+Node* StatmentAction6(Node* node1 , Node* node2, Node* node3, Node* node4 , Node* node5  , Node* node6 , RegManagment& regManagment , CodeBuffer& codeBuffer);
 // Statment -> WHILE LPAREN <MARKER> M Exp <MARKER> RPAREN M Statement
 Node* StatmentAction7(Node* node1 , Node* node2, Node* node3, Node* node4 , Node* node5 
 , Node* node6 , Node* node7 , Node* node8 , Node* node9 , RegManagment& regManagment , CodeBuffer& codeBuffer);
@@ -63,7 +62,8 @@ Node* StatmentAction11(SymbolTable& symTable , Node * node1 , Node * node2, RegM
 //Statement -> Call SC
 Node* StatmentAction12(SymbolTable& symTable , Node * node1);
 //IF_SUFFIX -> IF LPAREN <Marker> Exp <Marker> RPAREN M Statement
-Node* IfActionAction(Node * node1);
+Node* IfActionAction(Node * node1 , Node * node2 , Node * node3 , Node * node4 , Node * node5 , Node * node6 ,Node * node7, Node * node8
+ , RegManagment& regManagment , CodeBuffer& codeBuffer);
 // Call -> ID LPAREN ExpList RPAREN
 Node* CallAction1(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3 , Node* node4
  , RegManagment& regManagment , CodeBuffer& codeBuffer);
@@ -145,6 +145,8 @@ Node * MMarkerAction(CodeBuffer& codeBuffer);
 
 void BinopCmdToBuffer(WorkReg left , opTypeEnum op , WorkReg right , WorkReg res , RegManagment& regManagment , CodeBuffer& codeBuffer);
 
+NonTermBool* RelopCmdToBuffer(WorkReg left , opTypeEnum op , WorkReg right, RegManagment& regManagment , CodeBuffer& codeBuffer);
+
 //====== Function decleration Related Functions ==============
 
 void FuncDeclToBuffer(std::string funcName , CodeBuffer& codeBuffer);
@@ -161,15 +163,13 @@ void callPrintiToBuffer(WorkReg workReg , RegManagment& regManagment , CodeBuffe
 
 void AddAndAssignNonBoolVarToBuffer(WorkReg reg  , RegManagment& regManagment , CodeBuffer& codeBuffer);
 
-void AddNonBoolVarToBuffer(RegManagment& regManagment , CodeBuffer& codeBuffer);
+void AddVarToBuffer(RegManagment& regManagment , CodeBuffer& codeBuffer);
 
 void AssignNonBoolVarToBuffer(WorkReg reg , int varOffset , RegManagment& regManagment , CodeBuffer& codeBuffer);
 
-void AddAndAssignBoolVarToBuffer(WorkReg reg  , RegManagment& regManagment , CodeBuffer& codeBuffer);
+void AddAndAssignBoolVarToBuffer(NonTermBool* nonTermBool , RegManagment& regManagment , CodeBuffer& codeBuffer);
 
-void AddBoolVarToBuffer(WorkReg reg  , RegManagment& regManagment , CodeBuffer& codeBuffer);
-
-void AssignBoolVarToBuffer(WorkReg reg  , RegManagment& regManagment , CodeBuffer& codeBuffer);
+void AssignBoolVarToBuffer(NonTermBool* nonTermBool , int offset  , RegManagment& regManagment , CodeBuffer& codeBuffer);
 
 void backUpTakenRegisters(RegManagment& regManagment,CodeBuffer& codeBuffer);
 

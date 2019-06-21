@@ -37,18 +37,6 @@ class NonTermStatments : public Node {
     std::vector<int> GetContinueList() {return ContinueList;}
 };
 
-class NonTermIfSuffix : public Node {
-    private:
-    std::string Label;
-    NonTermBool * BoolExp;
-    NonTermStatments* Statments;
-    public:
-    NonTermIfSuffix(std::string label , NonTermBool* boolExp , NonTermStatments* statments) :
-     Label(label) , BoolExp(boolExp) , Statments(statments) {}
-    std::string GetLabel () {return Label;}
-    NonTermBool* GetNonTermBool() {return BoolExp; }
-    NonTermStatments* GetStatments() {return Statments;}
-};
 
 //======================================token's Classes=====================================//
 
@@ -248,7 +236,7 @@ class NonTermFunc : public DataObj {
 class NonTermVoid : public DataObj {
     std::string name;
     public:
-    NonTermVoid();
+    NonTermVoid() : DataObj(NONE) {}
     NonTermVoid(std::string name);
 };
 
@@ -323,6 +311,23 @@ class PreCondListObj : public Node {
 
 };
 
+
+
+
+class NonTermIfSuffix : public Node {
+    private:
+    std::string Label;
+    NonTermBool * BoolExp;
+    NonTermStatments* Statments;
+    public:
+    NonTermIfSuffix(std::string label , NonTermBool* boolExp , NonTermStatments* statments) :
+     Label(label) , BoolExp(boolExp) , Statments(statments) {}
+    std::string GetLabel () {return Label;}
+    NonTermBool* GetNonTermBool() {return BoolExp; }
+    NonTermStatments* GetStatments() {return Statments;}
+};
+
+
 //======================================Attributes-related Functions=====================================//
 
 bool IsItConstOrExistingSymbol(DataObj * dataObject);
@@ -338,6 +343,7 @@ std::vector<string> CallToRetType(std::list<TypeNameEnum> paraList1);
 std::string TypeToString(TypeNameEnum type);
 
 TypeNameEnum TypeNameToTypeEnum(Node * node);
+
 
 int yyerror(char const* message);
 
