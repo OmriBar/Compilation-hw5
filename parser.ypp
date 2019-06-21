@@ -132,7 +132,7 @@ IF_SUFFIX : IF LPAREN {CallToEnterInnerScope(globalSymbolTable);} Exp {checkIfBo
 
 Call : 
     ID LPAREN ExpList RPAREN { $$ = CallAction1(globalSymbolTable,$1,$2,$3,$4,regManagment,codeBuffer); }                                |
-    ID LPAREN RPAREN         { $$ = CallAction2(globalSymbolTable,$1,$2,$3,regManagment);    }
+    ID LPAREN RPAREN         { $$ = CallAction2(globalSymbolTable,$1,$2,$3,regManagment,codeBuffer);    }
 ;
 ExpList :
     Exp COMMA ExpList { $$ = ExpListAction1($1,$2,$3);}                        | 
