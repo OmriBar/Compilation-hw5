@@ -407,16 +407,13 @@ Node* CallAction1(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node
         }
         codeBuffer.emit("jal func_"+funcSym->GetName());
         std::stringstream toStrSizeStack;
-        toStrSizeStack <<(expList.size()*4);
-        reg = regManagment.AllocateReg();
+        toStrSizeStack <<(expList.size()*4);   
         codeBuffer.emit("lw $ra, 0(sp)");
         codeBuffer.emit("lw $fp, 4(sp)");
-        codeBuffer.emit("move $v0, "+ WorkRegEnumToStr(reg));
         codeBuffer.emit("addu $sp, $sp, 8");
-
         codeBuffer.emit("addu $sp, $sp, " + toStrSizeStack.str());
         recoverTakenRegisters(regManagment,codeBuffer);
-         if(funcSym->GetRetType() != TYPE_VOID){
+        if(funcSym->GetRetType() != TYPE_VOID){
             reg = regManagment.AllocateReg();
             codeBuffer.emit("move $v0, "+ WorkRegEnumToStr(reg));
             return TypeNameToExp(funcSym->GetRetType(),reg);
@@ -553,7 +550,17 @@ Node* ExpAction3(SymbolTable& symTable , Node* node1 , RegManagment& regManagmen
 // Exp -> Call 
 
 Node* ExpAction4(Node* node , RegManagment& regManagment, CodeBuffer& codeBuffer){
-    return node;
+    if(dynamic_cast<NonTermBool*>(node) == NULL){
+      return node;  
+    }
+    NonTermBool* boolExp = dynamic_cast<NonTermBool*>(node);
+    WorkReg reg = boolExp->getWorkReg();
+    int falseListPos = codeBuffer.emit("beq $"+WorkRegEnumToStr(reg)+", 0, ");
+    int trueListPos = codeBuffer.emit("j ");
+    std::vector<int> falseList = codeBuffer.makelist(falseListPos);
+    std::vector<int> trueList = codeBuffer.makelist(trueListPos);
+    regManagment.FreeReg(reg);
+    return new NonTermBool(trueList,falseList);
 }
 
 // Exp -> NUM

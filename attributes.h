@@ -197,8 +197,7 @@ class  NonTermBool : public DataObj {
     static bool IsValidBoolExp(Node * node1, Node * node2 , Node * node3);
     static bool IsValidBoolExpRelExp(Node * node1, Node * node2 , Node * node3);
     NonTermBool(std::vector<int> truthList , std::vector<int> falseLisr);
-    //NonTermBool(WorkReg dataReg);
-    //NonTermBool(std::string name , WorkReg dataReg);
+    NonTermBool(WorkReg workReg);
     bool IsItVar() {return IsItVar();}
     std::vector<int> GetTrueList();
     std::vector<int> GetFalseList();

@@ -11,6 +11,8 @@ this->type = TYPE_BOOL;
 NonTermBool::NonTermBool(std::vector<int> truthList , std::vector<int> falseList) : 
 DataObj("",NONE) , TrueList(truthList) , FalseList(falseList) {}
 
+NonTermBool::NonTermBool(WorkReg workReg) : DataObj("",workReg) {}
+
 bool NonTermBool::IsValidBoolExp(Node * node1, Node * node2 , Node * node3){
     TypeNameEnum type1 = ExpToTypeName(node1);
     TypeNameEnum type2 = ExpToTypeName(node3);
