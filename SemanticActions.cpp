@@ -553,7 +553,20 @@ Node* ExpAction3(SymbolTable& symTable , Node* node1 , RegManagment& regManagmen
         output::errorUndef(yylineno,name);
         exit(0);
     }
-    return TypeNameToExp(sym->GetType(),regManagment.AllocateReg());
+    int offset = sym->GetIndex();
+    std::stringstream toStr;
+    toStr << offset;
+    WorkReg reg = regManagment.AllocateReg();
+    codeBuffer.emit("lw $"+WorkRegEnumToStr(reg)+", "+ toStr.str() + "($sp)");
+    if(sym->GetType() == TYPE_BOOL){
+        int falseListPos = codeBuffer.emit("beq $"+WorkRegEnumToStr(reg)+", 0, ");
+        int trueListPos = codeBuffer.emit("j ");
+        std::vector<int> falseList = codeBuffer.makelist(falseListPos);
+        std::vector<int> trueList = codeBuffer.makelist(trueListPos);
+        regManagment.FreeReg(reg);
+        return new NonTermBool(trueList,falseList);
+    }
+    return TypeNameToExp(sym->GetType(),reg);
 }
 
 // Exp -> Call 
@@ -646,7 +659,7 @@ Node* ExpAction10(Node* node1 , Node* node2 , Node* node3 , Node* node4 , RegMan
     NonTermMMarker* nonTermMMarker = dynamic_cast<NonTermMMarker*>(node3);
     std::vector<int> trueList = right->GetTrueList();
     std::vector<int> falseList = codeBuffer.merge(left->GetFalseList(),right->GetFalseList());
-    codeBuffer.bpatch(right->GetTrueList(),nonTermMMarker->GetLabel());
+    codeBuffer.bpatch(left->GetTrueList(),nonTermMMarker->GetLabel());
     return new NonTermBool(trueList,falseList);
 
 }
@@ -978,13 +991,13 @@ void AddAndAssignBoolVarToBuffer(NonTermBool* nonTermBool , RegManagment& regMan
     //_TrueLabel_:
     codeBuffer.bpatch(nonTermBool->GetTrueList(),codeBuffer.genLabel());
     //          li $<tempReg>, 1
-    codeBuffer.emit("li"+WorkRegEnumToStr(tempReg)+", 1");
+    codeBuffer.emit("li $"+WorkRegEnumToStr(tempReg)+", 1");
     //          j _EndLabel_
     int JumpToEnd = codeBuffer.emit("j ");
     // _FalseLabel_:
 	codeBuffer.bpatch(nonTermBool->GetFalseList(), codeBuffer.genLabel());
     //          li $<TempReg>, 0
-	codeBuffer.emit("li " + WorkRegEnumToStr(tempReg) + ", 0");
+	codeBuffer.emit("li $" + WorkRegEnumToStr(tempReg) + ", 0");
     // _EndLabel_:
 	codeBuffer.bpatch(codeBuffer.makelist(JumpToEnd), codeBuffer.genLabel());
     codeBuffer.emit("subu $sp, $sp , 4");
@@ -999,13 +1012,13 @@ void AssignBoolVarToBuffer(NonTermBool* nonTermBool , int offset  , RegManagment
     //_TrueLabel_:
     codeBuffer.bpatch(nonTermBool->GetTrueList(),codeBuffer.genLabel());
     //          li $<tempReg>, 1
-    codeBuffer.emit("li"+WorkRegEnumToStr(tempReg)+", 1");
+    codeBuffer.emit("li $"+WorkRegEnumToStr(tempReg)+", 1");
     //          j _EndLabel_
     int JumpToEnd = codeBuffer.emit("j ");
     // _FalseLabel_:
 	codeBuffer.bpatch(nonTermBool->GetFalseList(), codeBuffer.genLabel());
     //          li $<TempReg>, 0
-	codeBuffer.emit("li " + WorkRegEnumToStr(tempReg) + ", 0");
+	codeBuffer.emit("li $" + WorkRegEnumToStr(tempReg) + ", 0");
     // _EndLabel_:
 	codeBuffer.bpatch(codeBuffer.makelist(JumpToEnd), codeBuffer.genLabel());
 	codeBuffer.emit("sw $" + WorkRegEnumToStr(tempReg) + ", " + toStr.str() + "($fp)");

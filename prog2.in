@@ -1,6 +1,8 @@
 void main()
 {
-    if(true and false){
+	bool a1 = true;
+	bool a2 = true;
+    if(a1 and a2){
 		print("print this\n");
 	}
 	else{
