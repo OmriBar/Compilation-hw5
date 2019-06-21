@@ -108,21 +108,22 @@ Statements :
     Statement | Statements Statement // dont need to do anything right now
 ;
 Statement : 
-    COMMENT                                                                                                                                 |
-    LBRACE {CallToEnterInnerScope(globalSymbolTable);} Statements {CallToExitInnerScope(globalSymbolTable);} RBRACE {StatmentAction1();}                       | 
-    Type ID SC               {StatmentAction2(globalSymbolTable,$1,$2,$3,regManagment,codeBuffer);}                                                                 | 
-    Type ID ASSIGN Exp SC    {StatmentAction3(globalSymbolTable ,$1,$2,$3,$4,$5,regManagment,codeBuffer);}                                                          | 
-    ID ASSIGN Exp SC         {StatmentAction4(globalSymbolTable,$1,$2,$3,$4,regManagment,codeBuffer);}                                                              | 
-    IF_SUFFIX  %prec "then"                                                                                                                 |
+    COMMENT                                                                                                                                                         |
+    LBRACE {CallToEnterInnerScope(globalSymbolTable);} Statements {CallToExitInnerScope(globalSymbolTable);} RBRACE { $$ = StatmentAction1($1);}                    | 
+    Type ID SC               {$$ = StatmentAction2(globalSymbolTable,$1,$2,$3,regManagment,codeBuffer);}                                                                 | 
+    Type ID ASSIGN Exp SC    {$$ = StatmentAction3(globalSymbolTable ,$1,$2,$3,$4,$5,regManagment,codeBuffer);}                                                          | 
+    ID ASSIGN Exp SC         {$$ = StatmentAction4(globalSymbolTable,$1,$2,$3,$4,regManagment,codeBuffer);}                                                              | 
+    IF_SUFFIX  %prec "then"  {$$ = StatmentAction5(globalSymbolTable,$1,regManagment,codeBuffer);}                                                                                                                                   |
     IF_SUFFIX ELSE {CallToEnterInnerScope(globalSymbolTable);} M Statement {CallToExitInnerScope(globalSymbolTable);}         
-                             {StatmentAction5($1,$2,$3,$4,$5);}                                                                             |
-    WHILE LPAREN {CallToEnterInnerScope(globalSymbolTable); EnterWhile(in_while_flag);} Exp {checkIfBoolInWhileIf($4);} RPAREN M Statement 
-             {CallToExitInnerScope(globalSymbolTable);ExitWhile(in_while_flag);StatmentAction6(in_while_flag);}                                                            |
-    BREAK SC                 {StatmentAction7(in_while_flag);}                                                                              |
-    CONTINUE SC              {StatmentAction8(in_while_flag);}                                                                              |
-    RETURN SC                {StatmentAction9(globalSymbolTable);}                                                                          |
-    RETURN Exp SC            {StatmentAction10(globalSymbolTable,$1,$2);}                                                                    |
-    Call SC                  {StatmentAction11();}
+                             {$$ = StatmentAction6($1,$2,$3,$4,$5,regManagment,codeBuffer);}                                                                                                     |
+    WHILE LPAREN {CallToEnterInnerScope(globalSymbolTable); EnterWhile(in_while_flag);} M Exp {checkIfBoolInWhileIf($4);} RPAREN M Statement 
+             {CallToExitInnerScope(globalSymbolTable);ExitWhile(in_while_flag);
+             StatmentAction7($1,$2,$3,$4,$5,$6,$7,$8,$9,regManagment,codeBuffer);}                                                     |
+    BREAK SC                 {StatmentAction8(in_while_flag);}                                                                                                      |
+    CONTINUE SC              {StatmentAction9(in_while_flag);}                                                                                                      |
+    RETURN SC                {StatmentAction10(globalSymbolTable);}                                                                                                  |
+    RETURN Exp SC            {StatmentAction11(globalSymbolTable,$1,$2);}                                                                                           |
+    Call SC                  {StatmentAction12();}
 ;
 
 IF_SUFFIX : IF LPAREN {CallToEnterInnerScope(globalSymbolTable);} Exp {checkIfBoolInWhileIf($4);} RPAREN M Statement 

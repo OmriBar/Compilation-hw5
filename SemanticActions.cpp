@@ -102,12 +102,14 @@ Node* StatementsAction2(Node* node1 , Node* node2 , CodeBuffer& codeBuffer){
 }
 
 // Statment -> LBRACE <MARKER> Statements <MARKER> RBRACE
-Node* StatmentAction1(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3
- , Node* node4 , Node* node5 , RegManagment& regManagment , CodeBuffer& codeBuffer){ } // TODO
+
+Node* StatmentAction1(Node * node){
+     return node;
+  } // TODO
 
 //Statment -> Type ID SC
 
-Node* StatmentAction1(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3 ,
+Node* StatmentAction2(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3 ,
  RegManagment& regManagment , CodeBuffer& codeBuffer){
     std::string name = (dynamic_cast<IdVal*>(node2))->IdStr;
     Symbol* sym = symTable.GetSymbol(name);
@@ -123,7 +125,7 @@ Node* StatmentAction1(SymbolTable& symTable , Node* node1 , Node* node2, Node* n
 
 //Statment -> Type ID ASSIGN Exp SC
 
-Node* StatmentAction2(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3, Node* node4, Node* node5
+Node* StatmentAction3(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3, Node* node4, Node* node5
 , RegManagment& regManagment , CodeBuffer& codeBuffer){
     std::string name = (dynamic_cast<IdVal*>(node2))->IdStr;
     Symbol* sym = symTable.GetSymbol(name);
@@ -153,7 +155,7 @@ Node* StatmentAction2(SymbolTable& symTable , Node* node1 , Node* node2, Node* n
 
 //Statment -> ID ASSIGN Exp SC
 
-Node* StatmentAction3(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3, Node* node4
+Node* StatmentAction4(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3, Node* node4
         ,RegManagment& regManagment , CodeBuffer& codeBuffer){
     std::string name = (dynamic_cast<IdVal*>(node1))->IdStr;
     Symbol* sym = symTable.GetSymbol(name);
@@ -183,7 +185,7 @@ Node* StatmentAction3(SymbolTable& symTable , Node* node1 , Node* node2, Node* n
 
 //Statment -> IF_SUFFIX
 
-Node* StatmentAction4(Node* node1 , RegManagment& regManagment , CodeBuffer& codeBuffer){
+Node* StatmentAction5(Node* node1 , RegManagment& regManagment , CodeBuffer& codeBuffer){
     NonTermIfSuffix* nonTermIfSuffix = dynamic_cast<NonTermIfSuffix*>(node1);
     NonTermBool* nonTermBool = nonTermIfSuffix->GetNonTermBool();
     NonTermStatments* statments = nonTermIfSuffix->GetStatments();
@@ -196,7 +198,7 @@ Node* StatmentAction4(Node* node1 , RegManagment& regManagment , CodeBuffer& cod
 
 //Statment -> IF_SUFFIX ELSE <Marker> M Statement
 
-Node* StatmentAction5(Node* node1 , Node* node2, Node* node3, Node* node4 , Node* node5 , Node* node6
+Node* StatmentAction6(Node* node1 , Node* node2, Node* node3, Node* node4 , Node* node5 , Node* node6
  , RegManagment& regManagment , CodeBuffer& codeBuffer){
     NonTermIfSuffix* nonTermIfSuffix = dynamic_cast<NonTermIfSuffix*>(node1);
     NonTermBool* nonTermBool = nonTermIfSuffix->GetNonTermBool();
@@ -207,27 +209,40 @@ Node* StatmentAction5(Node* node1 , Node* node2, Node* node3, Node* node4 , Node
     return new NonTermStatments();
 } 
 
-// Statment -> WHILE LPAREN <MARKER> Exp <MARKER> RPAREN M Statement
+// Statment -> WHILE LPAREN <MARKER> M Exp <MARKER> RPAREN M Statement
 
-Node* StatmentAction6(Node* node1 , Node* node2, Node* node3, Node* node4 , Node* node5 
-, Node* node6 , Node* node7 , Node* node8, RegManagment& regManagment , CodeBuffer& codeBuffer){
-    NonTermStatments* nonTermStatments = dynamic_cast<NonTermStatments*>(node8);
+Node* StatmentAction7(Node* node1 , Node* node2, Node* node3, Node* node4 , Node* node5 
+, Node* node6 , Node* node7 , Node* node8 , Node* node9 , RegManagment& regManagment , CodeBuffer& codeBuffer){
+    NonTermStatments* nonTermStatments = dynamic_cast<NonTermStatments*>(node9);
     NonTermBool* boolExp = dynamic_cast<NonTermBool*>(node4);
-    NonTermMMarker* nonTermMMarker = dynamic_cast<NonTermMMarker*>(node7);
-    std::string label1 = nonTermMMarker->GetLabel();
-    std::string label2 = codeBuffer.genLabel();
-    int endWhileBlockPos = codeBuffer.emit("j "+label2);
+    NonTermMMarker* nonTermMMarker1 = dynamic_cast<NonTermMMarker*>(node4);
+    NonTermMMarker* nonTermMMarker2 = dynamic_cast<NonTermMMarker*>(node8);
+    std::string label1 = nonTermMMarker1->GetLabel();
+    std::string label2 = nonTermMMarker2->GetLabel();
     std::string label3 = codeBuffer.genLabel();
+    int endWhileBlockPos = codeBuffer.emit("j "+label3);
+    std::string label4 = codeBuffer.genLabel();
     
     codeBuffer.bpatch(codeBuffer.makelist(endWhileBlockPos),label1);
-    //codeBuffer.bpatch(codebu)
+    codeBuffer.bpatch(boolExp->GetTrueList(),label2);
+    codeBuffer.bpatch(boolExp->GetFalseList(),label4);
+    
+    /*
+    label1:
+        <Caculating Bolean Exp of while>
+    label2:
+        .....
+    label3:
+        j label1:
+    label4:
+     */
 
 
-} // TODO
+}
 
 //Statment -> BREAK SC 
 
-Node* StatmentAction6(int in_while_flag , CodeBuffer& codeBuffer){
+Node* StatmentAction8(int in_while_flag , CodeBuffer& codeBuffer){
     if(in_while_flag<=0){
      output::errorUnexpectedBreak(yylineno);
      exit(0);
@@ -241,7 +256,7 @@ Node* StatmentAction6(int in_while_flag , CodeBuffer& codeBuffer){
 
 //Statment -> CONTINUE SC
 
-Node* StatmentAction7(int in_while_flag , CodeBuffer& codeBuffer){
+Node* StatmentAction9(int in_while_flag , CodeBuffer& codeBuffer){
     if(in_while_flag<=0){
      output::errorUnexpectedContinue(yylineno);
      exit(0);
@@ -254,7 +269,7 @@ Node* StatmentAction7(int in_while_flag , CodeBuffer& codeBuffer){
 
 //Statment -> RETURN SC
 
-Node* StatmentAction8(SymbolTable& symTable){
+Node* StatmentAction10(SymbolTable& symTable){
     FunctionSymbol* funcSym = symTable.GetCurrentFunction();
     TypeNameEnum type = funcSym->GetRetType();
     if(!(type==TYPE_VOID)){
@@ -266,7 +281,7 @@ Node* StatmentAction8(SymbolTable& symTable){
 
 //Statment -> RETURN Exp SC
 
-Node* StatmentAction9(SymbolTable& symTable , Node * node1 , Node * node2){
+Node* StatmentAction11(SymbolTable& symTable , Node * node1 , Node * node2){
     TypeNameEnum currtype = ExpToTypeName(node2);
     FunctionSymbol* funcSym = symTable.GetCurrentFunction();
     TypeNameEnum definedType = funcSym->GetRetType();
@@ -278,13 +293,11 @@ Node* StatmentAction9(SymbolTable& symTable , Node * node1 , Node * node2){
     return new NonTermStatments();
 }
 
-//Statment -> RETURN Exp SC
+//Statement -> Call SC
 
-void StatmentAction10(SymbolTable& symTable , Node * node1 , Node * node2 , Node * node3){} // TODO
-
-//Statement -> Call
-
-void StatmentAction11(SymbolTable& symTable , Node * node1){}
+Node* StatmentAction12(SymbolTable& symTable , Node * node1){
+    return new NonTermStatments();
+}
 
 //IF_SUFFIX -> IF LPAREN <Marker> Exp <Marker> RPAREN M Statement
 

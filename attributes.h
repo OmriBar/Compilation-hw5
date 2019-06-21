@@ -187,7 +187,7 @@ class DataObj : public Node {
         virtual ~DataObj() {}
 };
 
-class NonTermBool : public DataObj {
+class  NonTermBool : public DataObj {
     std::string name;
     std::vector<int> TrueList;
     std::vector<int> FalseList;
