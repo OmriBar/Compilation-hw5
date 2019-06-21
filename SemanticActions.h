@@ -68,7 +68,7 @@ Node* IfActionAction(Node * node1);
 Node* CallAction1(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3 , Node* node4
  , RegManagment& regManagment , CodeBuffer& codeBuffer);
 // Call -> ID LPAREN RPAREN
-Node* CallAction2(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3, RegManagment& regManagment);
+Node* CallAction2(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3, RegManagment& regManagment, CodeBuffer& codeBuffer);
 //ExpList -> Exp COMMA ExpList 
 Node* ExpListAction1(Node* node1 , Node* node2 , Node* node3);
 //ExpList -> Exp
