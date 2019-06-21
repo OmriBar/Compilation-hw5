@@ -47,7 +47,7 @@ Node* StatmentAction4(SymbolTable& symTable , Node* node1 , Node* node2, Node* n
 //Statment -> IF_SUFFIX
 Node* StatmentAction5(Node* node1 , RegManagment& regManagment , CodeBuffer& codeBuffer);
 //Statment -> IF_SUFFIX ELSE <Marker> M Statement
-Node* StatmentAction6(Node* node1 , Node* node2, Node* node3, Node* node4 , Node* node5  , Node* node6 , RegManagment& regManagment , CodeBuffer& codeBuffer);
+Node* StatmentAction6(Node* node1 , Node* node2, Node* node3, Node* node4 , Node* node5 , RegManagment& regManagment , CodeBuffer& codeBuffer);
 // Statment -> WHILE LPAREN <MARKER> M Exp <MARKER> RPAREN M Statement
 Node* StatmentAction7(Node* node1 , Node* node2, Node* node3, Node* node4 , Node* node5 
 , Node* node6 , Node* node7 , Node* node8 , Node* node9 , RegManagment& regManagment , CodeBuffer& codeBuffer);

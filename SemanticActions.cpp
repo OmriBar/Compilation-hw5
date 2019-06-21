@@ -198,14 +198,17 @@ Node* StatmentAction5(Node* node1 , RegManagment& regManagment , CodeBuffer& cod
 
 //Statment -> IF_SUFFIX ELSE <Marker> M Statement
 
-Node* StatmentAction6(Node* node1 , Node* node2, Node* node3, Node* node4 , Node* node5 , Node* node6
+Node* StatmentAction6(Node* node1 , Node* node2, Node* node3, Node* node4 , Node* node5
  , RegManagment& regManagment , CodeBuffer& codeBuffer){
     NonTermIfSuffix* nonTermIfSuffix = dynamic_cast<NonTermIfSuffix*>(node1);
     NonTermBool* nonTermBool = nonTermIfSuffix->GetNonTermBool();
+    int JumpToEndPos = nonTermIfSuffix->GetJumpToEndPos();
     std::string label1 = nonTermIfSuffix->GetLabel();
     std::string label2 = (dynamic_cast<NonTermMMarker*>(node4))->GetLabel();
     codeBuffer.bpatch(nonTermBool->GetTrueList(),label1);
     codeBuffer.bpatch(nonTermBool->GetFalseList(),label2);
+    std::string label3 = codeBuffer.genLabel();
+    codeBuffer.bpatch(codeBuffer.makelist(JumpToEndPos),label3);
     return new NonTermStatments();
 } 
 
@@ -308,14 +311,15 @@ Node* StatmentAction12(SymbolTable& symTable , Node * node1){
 
 Node* IfActionAction(Node * node1 , Node * node2 , Node * node3 , Node * node4 , Node * node5 , Node * node6 ,Node * node7, Node * node8
  , RegManagment& regManagment , CodeBuffer& codeBuffer){
-    if(dynamic_cast<NonTermBool*>(node7)==NULL){
+    if(dynamic_cast<NonTermBool*>(node4)==NULL){
         output::errorMismatch(yylineno);
-            exit(0);
+        exit(0);
     }
     NonTermStatments* statments = dynamic_cast<NonTermStatments*>(node8);
-    NonTermBool* boolExp = dynamic_cast<NonTermBool*>(node7);
-    NonTermMMarker * nonTermMMarker = dynamic_cast<NonTermMMarker*>(node4);
-    return new NonTermIfSuffix(nonTermMMarker->GetLabel(),boolExp,statments);
+    NonTermBool* boolExp = dynamic_cast<NonTermBool*>(node4);
+    NonTermMMarker * nonTermMMarker = dynamic_cast<NonTermMMarker*>(node7);
+    int JumpToEndPos = codeBuffer.emit("j ");
+    return new NonTermIfSuffix(nonTermMMarker->GetLabel(),boolExp,statments,JumpToEndPos);
 }
 
 //ExpList -> Exp COMMA ExpList 

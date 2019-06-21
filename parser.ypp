@@ -115,7 +115,7 @@ Statement :
     ID ASSIGN Exp SC         {$$ = StatmentAction4(globalSymbolTable,$1,$2,$3,$4,regManagment,codeBuffer);}                                                              | 
     IF_SUFFIX  %prec "then"  {$$ = StatmentAction5($1,regManagment,codeBuffer);}                                                                                                                                   |
     IF_SUFFIX ELSE {CallToEnterInnerScope(globalSymbolTable);} M Statement {CallToExitInnerScope(globalSymbolTable);}         
-                             {$$ = StatmentAction6($1,$2,$3,$4,$5,$6,regManagment,codeBuffer);}                                                                                                     |
+                             {$$ = StatmentAction6($1,$2,$3,$4,$5,regManagment,codeBuffer);}                                                                                                     |
     WHILE LPAREN {CallToEnterInnerScope(globalSymbolTable); EnterWhile(in_while_flag);} M Exp {checkIfBoolInWhileIf($4);} RPAREN M Statement 
              {CallToExitInnerScope(globalSymbolTable);ExitWhile(in_while_flag);
              $$ = StatmentAction7($1,$2,$3,$4,$5,$6,$7,$8,$9,regManagment,codeBuffer);}                                                     |

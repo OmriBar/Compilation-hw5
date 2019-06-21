@@ -319,12 +319,14 @@ class NonTermIfSuffix : public Node {
     std::string Label;
     NonTermBool * BoolExp;
     NonTermStatments* Statments;
+    int JumpToEndPos;
     public:
-    NonTermIfSuffix(std::string label , NonTermBool* boolExp , NonTermStatments* statments) :
-     Label(label) , BoolExp(boolExp) , Statments(statments) {}
+    NonTermIfSuffix(std::string label , NonTermBool* boolExp , NonTermStatments* statments , int jumpToEndPos) :
+     Label(label) , BoolExp(boolExp) , Statments(statments) , JumpToEndPos(jumpToEndPos) {}
     std::string GetLabel () {return Label;}
     NonTermBool* GetNonTermBool() {return BoolExp; }
     NonTermStatments* GetStatments() {return Statments;}
+    int GetJumpToEndPos() {return JumpToEndPos;}
 };
 
 

@@ -1,6 +1,9 @@
 void main()
 {
-    if(true){
+    if(true and false){
 		print("print this\n");
+	}
+	else{
+	print("dont print this\n");
 	}
 }
