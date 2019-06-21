@@ -57,9 +57,9 @@ Node* StatmentAction8(int in_while_flag , CodeBuffer& codeBuffer);
 //Statment -> CONTINUE SC
 Node* StatmentAction9(int in_while_flag , CodeBuffer& codeBuffer);
 //Statment -> RETURN SC
-Node* StatmentAction10(SymbolTable& symTable);
+Node* StatmentAction10(SymbolTable& symTable, CodeBuffer& codeBuffer);
 //Statment -> RETURN Exp SC
-Node* StatmentAction11(SymbolTable& symTable , Node * node1 , Node * node2);
+Node* StatmentAction11(SymbolTable& symTable , Node * node1 , Node * node2, RegManagment& regManagment , CodeBuffer& codeBuffer);
 //Statement -> Call SC
 Node* StatmentAction12(SymbolTable& symTable , Node * node1);
 //IF_SUFFIX -> IF LPAREN <Marker> Exp <Marker> RPAREN M Statement

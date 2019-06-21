@@ -269,27 +269,32 @@ Node* StatmentAction9(int in_while_flag , CodeBuffer& codeBuffer){
 
 //Statment -> RETURN SC
 
-Node* StatmentAction10(SymbolTable& symTable){
+Node* StatmentAction10(SymbolTable& symTable, CodeBuffer& codeBuffer){
     FunctionSymbol* funcSym = symTable.GetCurrentFunction();
     TypeNameEnum type = funcSym->GetRetType();
     if(!(type==TYPE_VOID)){
         output::errorMismatch(yylineno);
         exit(0);
     }
+    codeBuffer.emit("jr $ra");
     return new NonTermStatments();
 }
 
 //Statment -> RETURN Exp SC
 
-Node* StatmentAction11(SymbolTable& symTable , Node * node1 , Node * node2){
+Node* StatmentAction11(SymbolTable& symTable , Node * node1 , Node * node2, RegManagment& regManagment , CodeBuffer& codeBuffer ){
     TypeNameEnum currtype = ExpToTypeName(node2);
     FunctionSymbol* funcSym = symTable.GetCurrentFunction();
     TypeNameEnum definedType = funcSym->GetRetType();
-
+    
     if(!(currtype==definedType) && !(definedType==TYPE_INT && currtype == TYPE_BYTE)){
         output::errorMismatch(yylineno);
         exit(0);
     }
+    DataObj * dataObj1 = dynamic_cast<DataObj*>(node2);
+    codeBuffer.emit("move "+ WorkRegEnumToStr(dataObj1->getWorkReg()) +", $v0");
+    dataObj1->freeWorkReg(regManagment);
+    codeBuffer.emit("jr $ra");
     return new NonTermStatments();
 }
 

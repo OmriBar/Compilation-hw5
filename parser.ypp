@@ -121,8 +121,8 @@ Statement :
              StatmentAction7($1,$2,$3,$4,$5,$6,$7,$8,$9,regManagment,codeBuffer);}                                                     |
     BREAK SC                 {StatmentAction8(in_while_flag);}                                                                                                      |
     CONTINUE SC              {StatmentAction9(in_while_flag);}                                                                                                      |
-    RETURN SC                {StatmentAction10(globalSymbolTable);}                                                                                                  |
-    RETURN Exp SC            {StatmentAction11(globalSymbolTable,$1,$2);}                                                                                           |
+    RETURN SC                {StatmentAction10(globalSymbolTable, codeBuffer);}                                                                                                  |
+    RETURN Exp SC            {StatmentAction11(globalSymbolTable,$1,$2,regManagment,codeBuffer);}                                                                                           |
     Call SC                  {StatmentAction12();}
 ;
 
