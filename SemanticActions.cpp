@@ -396,12 +396,19 @@ Node* CallAction1(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node
         std::stringstream toStrSizeStack;
         toStrSizeStack <<(expList.size()*4);
         reg = regManagment.AllocateReg();
-        codeBuffer.emit("lw "+ WorkRegEnumToStr(reg) +", 0(sp)");
-        codeBuffer.emit("lw $ra, 4(sp)");
-        codeBuffer.emit("lw $fp, 8(sp)");
-        codeBuffer.emit("addu $sp, $sp, 12");
+        codeBuffer.emit("lw $ra, 0(sp)");
+        codeBuffer.emit("lw $fp, 4(sp)");
+        codeBuffer.emit("move $v0, "+ WorkRegEnumToStr(reg));
+        codeBuffer.emit("addu $sp, $sp, 8");
+
         codeBuffer.emit("addu $sp, $sp, " + toStrSizeStack.str());
         recoverTakenRegisters(regManagment,codeBuffer);
+         if(funcSym->GetRetType() != TYPE_VOID){
+            reg = regManagment.AllocateReg();
+            codeBuffer.emit("move $v0, "+ WorkRegEnumToStr(reg));
+            return TypeNameToExp(funcSym->GetRetType(),reg);
+        }
+        return new NonTermVoid();
     }
     return TypeNameToExp(funcSym->GetRetType(),reg);
 }
@@ -443,14 +450,18 @@ Node* CallAction2(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node
     }
     FunctionSymbol* funcSym = dynamic_cast<FunctionSymbol*>(sym);
     backUpTakenRegisters(regManagment,codeBuffer);
-    codeBuffer.emit("jal func_"+funcSym->GetName());
-    reg = regManagment.AllocateReg();
-    codeBuffer.emit("lw "+ WorkRegEnumToStr(reg) +", 0(sp)");
-    codeBuffer.emit("lw $ra, 4(sp)");
-    codeBuffer.emit("lw $fp, 8(sp)");
-    codeBuffer.emit("addu $sp, $sp, 12");
+    codeBuffer.emit("jal func_"+funcSym->GetName());    
+    codeBuffer.emit("lw $ra, 0(sp)");
+    codeBuffer.emit("lw $fp, 4(sp)");
+    codeBuffer.emit("addu $sp, $sp, 8");
     recoverTakenRegisters(regManagment,codeBuffer);
-    return TypeNameToExp(funcSym->GetRetType(),reg);
+    if(funcSym->GetRetType() != TYPE_VOID){
+        reg = regManagment.AllocateReg();
+        codeBuffer.emit("move $v0, "+ WorkRegEnumToStr(reg));
+        return TypeNameToExp(funcSym->GetRetType(),reg);
+    }
+    return new NonTermVoid();
+    
 }
 
 // Type -> INT
