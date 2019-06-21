@@ -1,7 +1,15 @@
 void main()
 {
+	bool a1 = false;
 	bool a2 = false;
-    if(a2){
+	bool a3 = true;
+	bool a4 = false;
+	bool a5 = false;
+	bool a6 = false;
+	bool a7 = true;
+	bool a8 = false;
+	bool a9 = true;
+    if(a1 or a2 or a3 or a4 or a5 or a6 or a7 or a8 or a9){
 		print("print this\n");
 	}
 	else{
