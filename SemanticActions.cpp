@@ -739,7 +739,7 @@ void CallToExitFunctionScope(SymbolTable& symTable, CodeBuffer& codeBuffer){
     //output::endScope();
     FunctionSymbol * funcSym = symTable.GetCurrentFunction();
     if(funcSym->GetName()=="main"){
-        codeBuffer.emit("move $sp, $fp");
+        //codeBuffer.emit("move $sp, $fp");
         codeBuffer.emit("li $v0, 10");
 		codeBuffer.emit("syscall");
     }

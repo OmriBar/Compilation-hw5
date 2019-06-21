@@ -1,6 +1,6 @@
 void main()
 {
-	bool a2 = true;
+	bool a2 = false;
     if(a2){
 		print("print this\n");
 	}
