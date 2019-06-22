@@ -1,19 +1,21 @@
+
+//int lala3(int i){
+//	printi(6);
+//	return i;
+//}
+
+//int lala2(int i){
+//	return lala3(6);
+//}
+
+//int lala1(int i){
+//	return lala2(5);
+//}
+
 void main()
 {
-	bool a1 = false;
-	bool a2 = false;
-	bool a3 = true;
-	bool a4 = false;
-	bool a5 = false;
-	bool a6 = false;
-	bool a7 = true;
-	bool a8 = false;
-	bool a9 = true;
-    if(a1 or a2 or a3 or a4 or a5 or a6 or a7 or a8 or a9){
-		print("print this\n");
-	}
-	else{
-		print("dont print this\n");
-	}
-	
+	int var = 1;
+	print("hello");
+	var = var + 1;
+	printi(var);
 }

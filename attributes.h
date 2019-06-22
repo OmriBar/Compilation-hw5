@@ -162,7 +162,7 @@ class DataObj : public Node {
         WorkReg getWorkReg() {
             return DataReg;
         }
-        WorkReg freeWorkReg(RegManagment regManagment) {
+        WorkReg freeWorkReg(RegManagment& regManagment) {
             regManagment.FreeReg(DataReg);
         }
         DataObj(std::string name , WorkReg dataReg ) : Name(name) , DataReg(dataReg) {
@@ -277,6 +277,11 @@ class ExpListObj : public Node {
             return typesList;
         }
         int GetExpListObjSize() {return ExpList.size();}
+        void freeAllocRegisters(RegManagment& regManagment) {
+            for(std::list<DataObj*>::iterator it = ExpList.begin() ; it != ExpList.end() ; it++){
+                (*it)->freeWorkReg(regManagment); 
+            }
+        }
 };
 
 class ParaListObj : public Node {

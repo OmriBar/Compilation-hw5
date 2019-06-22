@@ -60,7 +60,7 @@ Node* StatmentAction10(SymbolTable& symTable, CodeBuffer& codeBuffer);
 //Statment -> RETURN Exp SC
 Node* StatmentAction11(SymbolTable& symTable , Node * node1 , Node * node2, RegManagment& regManagment , CodeBuffer& codeBuffer);
 //Statement -> Call SC
-Node* StatmentAction12(SymbolTable& symTable , Node * node1);
+Node* StatmentAction12(SymbolTable& symTable , Node * node1 , RegManagment& regManagment);
 //IF_SUFFIX -> IF LPAREN <Marker> Exp <Marker> RPAREN M Statement
 Node* IfActionAction(Node * node1 , Node * node2 , Node * node3 , Node * node4 , Node * node5 , Node * node6 ,Node * node7, Node * node8
  , RegManagment& regManagment , CodeBuffer& codeBuffer);

@@ -214,25 +214,21 @@ Node* StatmentAction6(Node* node1 , Node* node2, Node* node3, Node* node4 , Node
     codeBuffer.bpatch(codeBuffer.makelist(JumpToEndPos),label3);
     return new NonTermStatments();
 } 
-
+ 
 // Statment -> WHILE LPAREN <MARKER> M Exp <MARKER> RPAREN M Statement
 
 Node* StatmentAction7(Node* node1 , Node* node2, Node* node3, Node* node4 , Node* node5 
 , Node* node6 , Node* node7 , Node* node8 , Node* node9 , RegManagment& regManagment , CodeBuffer& codeBuffer){
     NonTermStatments* nonTermStatments = dynamic_cast<NonTermStatments*>(node9);
-    NonTermBool* boolExp = dynamic_cast<NonTermBool*>(node4);
+    NonTermBool* boolExp = dynamic_cast<NonTermBool*>(node5);
     NonTermMMarker* nonTermMMarker1 = dynamic_cast<NonTermMMarker*>(node4);
     NonTermMMarker* nonTermMMarker2 = dynamic_cast<NonTermMMarker*>(node8);
     std::string label1 = nonTermMMarker1->GetLabel();
     std::string label2 = nonTermMMarker2->GetLabel();
-    std::string label3 = codeBuffer.genLabel();
-    int endWhileBlockPos = codeBuffer.emit("j "+label3);
+    codeBuffer.emit("j "+label1);
     std::string label4 = codeBuffer.genLabel();
-    
-    codeBuffer.bpatch(codeBuffer.makelist(endWhileBlockPos),label1);
     codeBuffer.bpatch(boolExp->GetTrueList(),label2);
     codeBuffer.bpatch(boolExp->GetFalseList(),label4);
-    
     /*
     label1:
         <Caculating Bolean Exp of while>
@@ -298,7 +294,7 @@ Node* StatmentAction11(SymbolTable& symTable , Node * node1 , Node * node2, RegM
         exit(0);
     }
     DataObj * dataObj1 = dynamic_cast<DataObj*>(node2);
-    codeBuffer.emit("move "+ WorkRegEnumToStr(dataObj1->getWorkReg()) +", $v0");
+    codeBuffer.emit("move $"+ WorkRegEnumToStr(dataObj1->getWorkReg()) +", $v0");
     dataObj1->freeWorkReg(regManagment);
     codeBuffer.emit("jr $ra");
     return new NonTermStatments();
@@ -306,7 +302,11 @@ Node* StatmentAction11(SymbolTable& symTable , Node * node1 , Node * node2, RegM
 
 //Statement -> Call SC
 
-Node* StatmentAction12(SymbolTable& symTable , Node * node1){
+Node* StatmentAction12(SymbolTable& symTable , Node * node1 , RegManagment& regManagment){
+    if(dynamic_cast<NonTermVoid*>(node1) == NULL){
+        DataObj* dataObj = dynamic_cast<DataObj*>(node1);
+        dataObj->freeWorkReg(regManagment);
+    }
     return new NonTermStatments();
 }
 
@@ -331,7 +331,7 @@ Node* ExpListAction1(Node* node1 , Node* node2 , Node* node3) {
         return new ExpListObj(dynamic_cast<ExpListObj*>(node3),dynamic_cast<DataObj*>(node1));
 } 
 
-//ExpList -> Exp
+//ExpList -> Exp (need to add handling for bool!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!)
 
 Node* ExpListAction2(Node* node1){
     TypeNameEnum type = ExpToTypeName(node1);
@@ -396,14 +396,18 @@ Node* CallAction1(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node
     if(funcSym->GetName()=="print"){
         std::list<DataObj*> expList = (dynamic_cast<ExpListObj*>(node3))->GetExpListObj();
         NonTermStr* nonTermStr = dynamic_cast<NonTermStr*>(expList.back());
+        backUpTakenRegisters(regManagment,codeBuffer);
         WorkReg ret=callPrintToBuffer(nonTermStr->GetLabel(),regManagment,codeBuffer);
+        recoverTakenRegisters(regManagment,codeBuffer);
         regManagment.FreeReg(ret);
     }
     else if(funcSym->GetName()=="printi"){
         std::list<DataObj*> expList = (dynamic_cast<ExpListObj*>(node3))->GetExpListObj();
         DataObj* nonTermInt = expList.back();
+        backUpTakenRegisters(regManagment,codeBuffer);
         WorkReg workReg = nonTermInt->getWorkReg();
         callPrintiToBuffer(workReg,regManagment,codeBuffer);
+        recoverTakenRegisters(regManagment,codeBuffer);
         regManagment.FreeReg(workReg);
     }
     else{
@@ -414,20 +418,26 @@ Node* CallAction1(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node
         for(std::list<DataObj*>::iterator it = expList.begin(); it != expList.end(); it++){
             data = *it;
             codeBuffer.emit("subu $sp, $sp, 4");
-            codeBuffer.emit("sw " +WorkRegEnumToStr(data->getWorkReg()) + ", ($sp)");
+            codeBuffer.emit("sw $" +WorkRegEnumToStr(data->getWorkReg()) + ", ($sp)");
             regManagment.FreeReg(data->getWorkReg());
         }
+        ExpListObj* expListObj = dynamic_cast<ExpListObj*>(node3);
+        expListObj->freeAllocRegisters(regManagment);
+        codeBuffer.emit("subu $sp, $sp, 4");
+        codeBuffer.emit("subu $sp, $sp, 4");
+        codeBuffer.emit("sw $fp, 4($sp)");
+        codeBuffer.emit("sw $ra, 0($sp)");
         codeBuffer.emit("jal func_"+funcSym->GetName());
         std::stringstream toStrSizeStack;
         toStrSizeStack <<(expList.size()*4);   
-        codeBuffer.emit("lw $ra, 0(sp)");
-        codeBuffer.emit("lw $fp, 4(sp)");
+        codeBuffer.emit("lw $ra, 0($sp)");
+        codeBuffer.emit("lw $fp, 4($sp)");
         codeBuffer.emit("addu $sp, $sp, 8");
         codeBuffer.emit("addu $sp, $sp, " + toStrSizeStack.str());
         recoverTakenRegisters(regManagment,codeBuffer);
         if(funcSym->GetRetType() != TYPE_VOID){
             reg = regManagment.AllocateReg();
-            codeBuffer.emit("move $v0, "+ WorkRegEnumToStr(reg));
+            codeBuffer.emit("move $v0, $"+ WorkRegEnumToStr(reg));
             return TypeNameToExp(funcSym->GetRetType(),reg);
         }
         return new NonTermVoid();
@@ -440,7 +450,7 @@ void backUpTakenRegisters(RegManagment& regManagment,CodeBuffer& codeBuffer){
     for(std::map<WorkReg,WorkReg>::iterator it = regManagment.TakenRegList.begin(); it != regManagment.TakenRegList.end(); it++){
         reg= it->first;
         codeBuffer.emit("subu $sp, $sp, 4");
-        codeBuffer.emit("sw $" + WorkRegEnumToStr(reg) + ", 0(sp)");
+        codeBuffer.emit("sw $" + WorkRegEnumToStr(reg) + ", 0($sp)");
     }
 }
 
@@ -448,7 +458,7 @@ void recoverTakenRegisters(RegManagment& regManagment,CodeBuffer& codeBuffer){
     WorkReg reg;
     for(std::map<WorkReg,WorkReg>::iterator it = regManagment.TakenRegList.begin(); it != regManagment.TakenRegList.end(); it++){
         reg= it->first;
-        codeBuffer.emit("lw $"+ WorkRegEnumToStr(reg) +", 0(sp)");
+        codeBuffer.emit("lw $"+ WorkRegEnumToStr(reg) +", 0($sp)");
         codeBuffer.emit("addu $sp, $sp, 4");
     }
 }
@@ -473,13 +483,13 @@ Node* CallAction2(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node
     FunctionSymbol* funcSym = dynamic_cast<FunctionSymbol*>(sym);
     backUpTakenRegisters(regManagment,codeBuffer);
     codeBuffer.emit("jal func_"+funcSym->GetName());    
-    codeBuffer.emit("lw $ra, 0(sp)");
-    codeBuffer.emit("lw $fp, 4(sp)");
+    codeBuffer.emit("lw $ra, 0($sp)");
+    codeBuffer.emit("lw $fp, 4($sp)");
     codeBuffer.emit("addu $sp, $sp, 8");
     recoverTakenRegisters(regManagment,codeBuffer);
     if(funcSym->GetRetType() != TYPE_VOID){
         reg = regManagment.AllocateReg();
-        codeBuffer.emit("move $v0, "+ WorkRegEnumToStr(reg));
+        codeBuffer.emit("move $v0, $"+ WorkRegEnumToStr(reg));
         return TypeNameToExp(funcSym->GetRetType(),reg);
     }
     return new NonTermVoid();
@@ -929,7 +939,6 @@ void AddFuncPrintPrintiToBuffer(CodeBuffer& codeBuffer){
 
 std::string SaveStringToData(std::string text  , RegManagment& regManagment , CodeBuffer& codeBuffer){
     static int stringCounter=0;
-    WorkReg reg = regManagment.AllocateReg();
     std::stringstream counterToStr;
     counterToStr << (stringCounter++);
     std::string stringCounterStr = counterToStr.str();
@@ -944,10 +953,14 @@ WorkReg callPrintToBuffer(std::string label , RegManagment& regManagment , CodeB
 		WorkReg tempReg = regManagment.AllocateReg();
 		codeBuffer.emit("la $"+ WorkRegEnumToStr(tempReg) + ", " + label);
 		codeBuffer.emit("sw $" + WorkRegEnumToStr(tempReg) + ", 0($sp)");
+        //codeBuffer.emit("subu $sp, $sp, 8");
+        //codeBuffer.emit("sw $fp, 4($sp)");
+        //codeBuffer.emit("sw $ra, 0($sp)");
 		codeBuffer.emit("jal print");
-		codeBuffer.emit("lw $ra, 4($sp)");
-		codeBuffer.emit("lw $fp, 8($sp)");
-		codeBuffer.emit("addu $sp, $sp, 12");
+        //codeBuffer.emit("lw $ra, 0($sp)");
+        //codeBuffer.emit("lw $fp, 4($sp)");
+        //codeBuffer.emit("addu $sp, $sp, 12");
+        codeBuffer.emit("addu $sp, $sp, 4");
         return tempReg;
 }
 
@@ -955,10 +968,14 @@ WorkReg callPrintToBuffer(std::string label , RegManagment& regManagment , CodeB
 void callPrintiToBuffer(WorkReg workReg , RegManagment& regManagment , CodeBuffer& codeBuffer){
         codeBuffer.emit("subu $sp, $sp , 4");
 		codeBuffer.emit("sw $" + WorkRegEnumToStr(workReg) + ", 0($sp)");
+        //codeBuffer.emit("subu $sp, $sp, 8");
+        //codeBuffer.emit("sw $fp, 4($sp)");
+        //codeBuffer.emit("sw $ra, 0($sp)");
 		codeBuffer.emit("jal printi");
-		codeBuffer.emit("lw $ra, 4($sp)");
-		codeBuffer.emit("lw $fp, 8($sp)");
-		codeBuffer.emit("addu $sp, $sp , 12");
+        //codeBuffer.emit("lw $ra, 0($sp)");
+        //codeBuffer.emit("lw $fp, 4($sp)");
+        //codeBuffer.emit("addu $sp, $sp, 12");
+        codeBuffer.emit("addu $sp, $sp, 4");
 }
 
 
