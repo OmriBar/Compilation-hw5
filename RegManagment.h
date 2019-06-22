@@ -20,6 +20,7 @@ class RegManagment {
         RegManagment();
         WorkReg AllocateReg();
         void FreeReg(WorkReg reg);
+        std::list<WorkReg> GetCurrentTakenRegsList();
 };
 
 #endif

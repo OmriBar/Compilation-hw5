@@ -64,3 +64,11 @@ void RegManagment::FreeReg(WorkReg reg) {
     FreeRegList.push_back(reg);
     TakenRegList.erase(reg);
 }
+
+std::list<WorkReg> RegManagment::GetCurrentTakenRegsList() {
+    std::list<WorkReg> returnedList = std::list<WorkReg>();
+    for(std::map<WorkReg,WorkReg>::iterator it = TakenRegList.begin() ; it != TakenRegList.end() ; it++){
+        returnedList.push_back((*it).first);
+    }
+    return returnedList;
+}

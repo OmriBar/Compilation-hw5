@@ -171,9 +171,9 @@ void AddAndAssignBoolVarToBuffer(NonTermBool* nonTermBool , RegManagment& regMan
 
 void AssignBoolVarToBuffer(NonTermBool* nonTermBool , int offset  , RegManagment& regManagment , CodeBuffer& codeBuffer);
 
-void backUpTakenRegisters(RegManagment& regManagment,CodeBuffer& codeBuffer);
+void backUpTakenRegisters(std::list<WorkReg> currentTakenRegsList , CodeBuffer& codeBuffer);
 
-void recoverTakenRegisters(RegManagment& regManagment,CodeBuffer& codeBuffer);
+void recoverTakenRegisters(std::list<WorkReg> currentTakenRegsList , CodeBuffer& codeBuffer);
 
 void BinopCmdToBuffer(WorkReg left , opTypeEnum op , WorkReg right , WorkReg res , RegManagment& regManagment , CodeBuffer& codeBuffer);
 #endif

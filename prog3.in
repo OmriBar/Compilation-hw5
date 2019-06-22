@@ -1,0 +1,9 @@
+void main()
+{
+	int var = 0;
+	while (var < 10){
+		printi(var);
+		print("\n");
+		var = var + 1;
+	}
+}
