@@ -72,3 +72,20 @@ std::list<WorkReg> RegManagment::GetCurrentTakenRegsList() {
     }
     return returnedList;
 }
+
+void RegManagment::printTaken() {
+    std::cout << "taken : " << std::endl;
+    for(std::map<WorkReg,WorkReg>::iterator it = TakenRegList.begin() ; it != TakenRegList.end() ; it++){
+        std::cout << WorkRegEnumToStr((*it).first) << std::endl;
+    }
+     std::cout << "end list" << std::endl;
+}
+std::stringstream RegManagment::printFree(){
+    std::stringstream toStr;
+    toStr << "free : " << std::endl;
+    for(std::list<WorkReg>::iterator it = FreeRegList.begin() ; it != FreeRegList.end() ; it++){
+        toStr << WorkRegEnumToStr(*it) << std::endl;
+    }
+     toStr << "end list" << std::endl;
+     return toStr;
+}

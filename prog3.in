@@ -1,9 +1,9 @@
 void main()
 {
-	int var = 0;
-	while (var < 10){
+	int var = 2;
+	while (var < 10) {
+		var = var + 1;
 		printi(var);
 		print("\n");
-		var = var + 1;
 	}
 }

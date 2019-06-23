@@ -79,7 +79,9 @@ FuncDecl :
       LBRACE
         Statements 
       RBRACE 
-                {CallToExitFunctionScope(globalSymbolTable,codeBuffer);}
+                {   FuncEndToBuffer(globalSymbolTable,$2,codeBuffer);
+                    CallToExitFunctionScope(globalSymbolTable,codeBuffer);
+}
 ;
 
 
@@ -136,7 +138,7 @@ Call :
 ;
 ExpList :
     Exp COMMA ExpList { $$ = ExpListAction1($1,$2,$3);}                        | 
-    Exp               { $$ = ExpListAction2($1);}
+    Exp               { $$ = ExpListAction2($1,regManagment,codeBuffer);}
 ;
 Type :
     INT     { $$ = TypeAction1();}  |

@@ -4,6 +4,12 @@
 #include <list>
 #include <string>
 #include <map>
+
+
+#include <sstream>
+#include <iostream>
+
+
 using namespace std;
 
 enum WorkReg { NONE , T8 , T9 ,
@@ -21,6 +27,8 @@ class RegManagment {
         WorkReg AllocateReg();
         void FreeReg(WorkReg reg);
         std::list<WorkReg> GetCurrentTakenRegsList();
+        void printTaken();
+        std::stringstream printFree();
 };
 
 #endif

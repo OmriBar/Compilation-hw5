@@ -13,6 +13,8 @@
 extern int yylineno;
 extern Node* yylval;
 
+
+Node * FuncEnd(Node * node2 , CodeBuffer& codeBuffer);
 // RetType -> TYPE 
 Node * RetTypeAction1(Node * node1);
 // RetType -> VOID 
@@ -72,7 +74,7 @@ Node* CallAction2(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node
 //ExpList -> Exp COMMA ExpList 
 Node* ExpListAction1(Node* node1 , Node* node2 , Node* node3);
 //ExpList -> Exp
-Node* ExpListAction2(Node* node1);
+Node* ExpListAction2(Node* node1 , RegManagment& regManagment, CodeBuffer& codeBuffer);
 // Type -> INT
 Node* TypeAction1();
 // Type -> BYTE
@@ -149,7 +151,7 @@ NonTermBool* RelopCmdToBuffer(WorkReg left , opTypeEnum op , WorkReg right, RegM
 
 //====== Function decleration Related Functions ==============
 
-void FuncDeclToBuffer(std::string funcName , CodeBuffer& codeBuffer);
+void FuncDeclToBuffer(SymbolTable& symTable ,std::string funcName , CodeBuffer& codeBuffer);
 
 void AddFuncPrintPrintiToBuffer(CodeBuffer& codeBuffer);
 
@@ -176,4 +178,9 @@ void backUpTakenRegisters(std::list<WorkReg> currentTakenRegsList , CodeBuffer& 
 void recoverTakenRegisters(std::list<WorkReg> currentTakenRegsList , CodeBuffer& codeBuffer);
 
 void BinopCmdToBuffer(WorkReg left , opTypeEnum op , WorkReg right , WorkReg res , RegManagment& regManagment , CodeBuffer& codeBuffer);
+
+WorkReg AssignBoolVarToExpFromList(NonTermBool* nonTermBool, RegManagment& regManagment , CodeBuffer& codeBuffer);
+
+void FuncEndToBuffer(SymbolTable& symTable , Node * node2 , CodeBuffer& codeBuffer);
+
 #endif
