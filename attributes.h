@@ -303,8 +303,11 @@ class ParaListObj : public Node {
     
 class PreCondListObj : public Node {
     int numCond;
+    std::vector<int> TrueList;
+    std::vector<int> FalseList;
     public:
-        PreCondListObj(PreCondListObj * oldPreCondList) {
+        PreCondListObj(PreCondListObj * oldPreCondList , std::vector<int> trueList , std::vector<int> falseList ) :
+         TrueList(trueList) , FalseList(falseList) {
             if(oldPreCondList!=NULL){
                 numCond=(oldPreCondList->numCond) + 1;
             }
@@ -313,6 +316,8 @@ class PreCondListObj : public Node {
             }
         }
         int GetNumCond() {return numCond;}
+        std::vector<int> GetTrueList() { return TrueList;}
+        std::vector<int> GetFalseList() { return FalseList;}
 
 };
 

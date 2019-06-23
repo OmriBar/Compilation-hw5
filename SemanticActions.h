@@ -32,9 +32,9 @@ Node * FormalDeclAction1(SymbolTable& symTable , Node * node1 , Node * node2);
 // PreConditions -> epsilon
 Node* PreConditionsAction1();
 // PreConditions -> PreConditions PreCondition
-Node* PreConditionsAction2(Node* node1 , Node* node2);
+Node* PreConditionsAction2(Node* node1 , Node* node2, Node* node3 , CodeBuffer& codeBuffer);
 // PreCondition -> PRECOND LPAREN Exp RPAREN
-void PreConditionAction1(Node* node1 , Node* node2 , Node* node3 , Node* node4);
+Node* PreConditionAction1(Node* node1 , Node* node2 , Node* node3 , Node* node4 , CodeBuffer& codeBuffer);
 // Statment -> LBRACE <MARKER> Statements <MARKER> RBRACE
 Node* StatmentAction1(Node * node);
 // Statment -> Type ID SC
@@ -129,7 +129,7 @@ void CallToExitScopeWithPreConds(SymbolTable& symTable , Node* node1 , Node* nod
         Node* node4 , Node* node5 , Node* node6 , Node* node7);
 
 void addFunction(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3 ,
-        Node* node4 , Node* node5 , Node* node6 , Node* node7 , CodeBuffer& codeBuffer);
+        Node* node4 , Node* node5 , Node* node6 , Node* node7 , RegManagment& RegManagment , CodeBuffer& codeBuffer);
         
 void checkIfBoolInWhileIf(Node* node);
 
@@ -151,7 +151,8 @@ NonTermBool* RelopCmdToBuffer(WorkReg left , opTypeEnum op , WorkReg right, RegM
 
 //====== Function decleration Related Functions ==============
 
-void FuncDeclToBuffer(SymbolTable& symTable ,std::string funcName , CodeBuffer& codeBuffer);
+void FuncDeclToBuffer(SymbolTable& symTable , std::string funcName , CodeBuffer& codeBuffer ,
+ RegManagment& regManagment , PreCondListObj* paraListObj);
 
 void AddFuncPrintPrintiToBuffer(CodeBuffer& codeBuffer);
 
@@ -183,6 +184,8 @@ WorkReg AssignBoolVarToExpFromList(NonTermBool* nonTermBool, RegManagment& regMa
 
 void FuncEndToBuffer(SymbolTable& symTable , Node * node2 , CodeBuffer& codeBuffer);
 
-void PrintErrorMsToBuffer(std::string MsgLabelStr , std::string errorMsgStr , RegManagment& regManagment , CodeBuffer& codeBuffer);
+void PrintErrorMsToBuffer(std::string MsgLabelStr , RegManagment& regManagment , CodeBuffer& codeBuffer);
+
+void PrintDataToBuffer(CodeBuffer& codeBuffer);
 
 #endif

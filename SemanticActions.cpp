@@ -63,21 +63,27 @@ Node* PreConditionsAction1() {
     return NULL;
 }
 
-//PreConditions -> PreConditions PreCondition
+//PreConditions -> PreConditions M PreCondition
 
-Node* PreConditionsAction2(Node* node1 , Node* node2) {
-    return new PreCondListObj(dynamic_cast<PreCondListObj*>(node1));
+Node* PreConditionsAction2(Node* node1 , Node* node2, Node* node3 , CodeBuffer& codeBuffer) {
+    NonTermBool* boolExp = dynamic_cast<NonTermBool*>(node3);
+    NonTermMMarker* marker = dynamic_cast<NonTermMMarker*>(node2);
+    PreCondListObj* preCondListObj = dynamic_cast<PreCondListObj*>(node1);
+    codeBuffer.bpatch(preCondListObj->GetTrueList(),marker->GetLabel());
+    return new PreCondListObj(dynamic_cast<PreCondListObj*>(node1),boolExp->GetTrueList(),
+        codeBuffer.merge(boolExp->GetFalseList(),preCondListObj->GetFalseList()));
 }
 
 //PreCondition -> PRECOND LPAREN Exp RPAREN
 
-void PreConditionAction1(Node* node1 , Node* node2 , Node* node3 , Node* node4) {
+Node* PreConditionAction1(Node* node1 , Node* node2 , Node* node3 , Node* node4 , CodeBuffer& codeBuffer) {
     TypeNameEnum type = ExpToTypeName(node3);
     if(type!=TYPE_BOOL){
         output::errorMismatch(yylineno);
         exit(0);
-        //yyerror("");
     }
+    NonTermBool* boolExp = dynamic_cast<NonTermBool*>(node3);
+    return new PreCondListObj(NULL,boolExp->GetTrueList(),boolExp->GetFalseList());
 }
 
 //Statements -> Statment
@@ -803,7 +809,7 @@ void ExitWhile(int &in_while_flag) {
 // assosiated with : FuncDecl -> RetType ID  <MARKER> LPAREN Formals  RPAREN  PreConditions 
 
 void addFunction(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3 ,
-        Node* node4 , Node* node5 , Node* node6 , Node* node7 , CodeBuffer& codeBuffer){
+        Node* node4 , Node* node5 , Node* node6 , Node* node7 , RegManagment& regManagment , CodeBuffer& codeBuffer){
     symTable.StopEnteringFuncParas();
     TypeNameEnum type = (dynamic_cast<Type*>(node1))->name;
     std::string name = (dynamic_cast<IdVal*>(node2))->GetVal();
@@ -820,7 +826,8 @@ void addFunction(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3
             symTable.FoundMainFunc();
         }
     }
-    FuncDeclToBuffer(symTable,name,codeBuffer);
+    PreCondListObj* paraListObj = dynamic_cast<PreCondListObj*>(node7);
+    FuncDeclToBuffer(symTable,name,codeBuffer,regManagment,paraListObj);
     symTable.AddFuncSymbol(name,0,TYPE_FUNC,typesList,type,num);
 }
 
@@ -931,7 +938,8 @@ NonTermBool* RelopCmdToBuffer(WorkReg left , opTypeEnum op , WorkReg right, RegM
 
 //====== Function decleration Related Functions ==============
 
-void FuncDeclToBuffer(SymbolTable& symTable , std::string funcName , CodeBuffer& codeBuffer){
+void FuncDeclToBuffer(SymbolTable& symTable , std::string funcName , CodeBuffer& codeBuffer ,
+ RegManagment& regManagment , PreCondListObj* paraListObj){
     if(funcName != "main"){
 		codeBuffer.emit("func_" + funcName + ": ");
 	}
@@ -939,6 +947,14 @@ void FuncDeclToBuffer(SymbolTable& symTable , std::string funcName , CodeBuffer&
 		codeBuffer.emit(funcName + ": ");
 	}
 	codeBuffer.emit("move $fp, $sp");
+    if(paraListObj != NULL){
+        //_FalseLabel_:
+        codeBuffer.bpatch(paraListObj->GetFalseList(),codeBuffer.genLabel());
+        //          li $<tempReg>, 1
+        PrintErrorMsToBuffer("preCondError",regManagment,codeBuffer);
+        // _TrueLabel_:
+	    codeBuffer.bpatch(paraListObj->GetTrueList(), codeBuffer.genLabel());
+    }
     if(funcName!= "main"){
         int offset = (symTable.GetCurrentFunction()->GetParametersList().size() * 4);
         std::stringstream toStr;
@@ -1091,9 +1107,8 @@ void FuncEndToBuffer(SymbolTable& symTable , Node * node2 , CodeBuffer& codeBuff
     codeBuffer.emit("jr $ra");
 }
 
-void PrintErrorMsToBuffer(std::string MsgLabelStr , std::string errorMsgStr , RegManagment& regManagment , CodeBuffer& codeBuffer){
+void PrintErrorMsToBuffer(std::string MsgLabelStr , RegManagment& regManagment , CodeBuffer& codeBuffer){
     WorkReg reg = regManagment.AllocateReg();
-    codeBuffer.emitData(MsgLabelStr + ": .asciiz" + errorMsgStr);
     codeBuffer.emit("subu $sp, $sp, 4");
     codeBuffer.emit("sw $fp, 0($sp)");
     codeBuffer.emit("subu $sp, $sp, 4");
@@ -1109,4 +1124,8 @@ void PrintErrorMsToBuffer(std::string MsgLabelStr , std::string errorMsgStr , Re
     codeBuffer.emit("li $v0, 10");
 	codeBuffer.emit("syscall");
     regManagment.FreeReg(reg);
+}
+
+void PrintDataToBuffer(CodeBuffer& codeBuffer){
+    codeBuffer.emitData("preCondError: .asciiz \"not setisfies conditions\"");
 }
