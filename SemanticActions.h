@@ -129,7 +129,7 @@ void CallToExitScopeWithPreConds(SymbolTable& symTable , Node* node1 , Node* nod
         Node* node4 , Node* node5 , Node* node6 , Node* node7);
 
 void addFunction(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3 ,
-        Node* node4 , Node* node5 , Node* node6 , Node* node7 , RegManagment& RegManagment , CodeBuffer& codeBuffer);
+        Node* node4 , Node* node5 , Node* node6 , Node* node7 , Node* node8 , RegManagment& regManagment , CodeBuffer& codeBuffer);
         
 void checkIfBoolInWhileIf(Node* node);
 
@@ -187,5 +187,7 @@ void FuncEndToBuffer(SymbolTable& symTable , Node * node2 , CodeBuffer& codeBuff
 void PrintErrorMsToBuffer(std::string MsgLabelStr , RegManagment& regManagment , CodeBuffer& codeBuffer);
 
 void PrintDataToBuffer(CodeBuffer& codeBuffer);
+
+void FuncLabelToBuffer(Node* node2 , CodeBuffer& codeBuffer);
 
 #endif

@@ -66,12 +66,21 @@ Node* PreConditionsAction1() {
 //PreConditions -> PreConditions M PreCondition
 
 Node* PreConditionsAction2(Node* node1 , Node* node2, Node* node3 , CodeBuffer& codeBuffer) {
-    NonTermBool* boolExp = dynamic_cast<NonTermBool*>(node3);
+    PreCondListObj* preCondObj = dynamic_cast<PreCondListObj*>(node3);
     NonTermMMarker* marker = dynamic_cast<NonTermMMarker*>(node2);
     PreCondListObj* preCondListObj = dynamic_cast<PreCondListObj*>(node1);
-    codeBuffer.bpatch(preCondListObj->GetTrueList(),marker->GetLabel());
-    return new PreCondListObj(dynamic_cast<PreCondListObj*>(node1),boolExp->GetTrueList(),
-        codeBuffer.merge(boolExp->GetFalseList(),preCondListObj->GetFalseList()));
+    std::vector<int> TrueList;
+    std::vector<int> FalseList;
+    if(node1 != NULL){
+        codeBuffer.bpatch(preCondListObj->GetTrueList(),marker->GetLabel());
+        TrueList = preCondObj->GetTrueList();
+        FalseList = codeBuffer.merge(preCondObj->GetFalseList(),preCondListObj->GetFalseList());
+    }
+    else{
+        TrueList = preCondObj->GetTrueList();
+        FalseList = preCondObj->GetFalseList();
+    }
+    return new PreCondListObj(dynamic_cast<PreCondListObj*>(node1),TrueList,FalseList);
 }
 
 //PreCondition -> PRECOND LPAREN Exp RPAREN
@@ -806,10 +815,10 @@ void ExitWhile(int &in_while_flag) {
     in_while_flag--;
 }
 
-// assosiated with : FuncDecl -> RetType ID  <MARKER> LPAREN Formals  RPAREN  PreConditions 
+// assosiated with : FuncDecl -> RetType ID  <MARKER> LPAREN Formals  RPAREN <MARKER> PreConditions 
 
 void addFunction(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3 ,
-        Node* node4 , Node* node5 , Node* node6 , Node* node7 , RegManagment& regManagment , CodeBuffer& codeBuffer){
+        Node* node4 , Node* node5 , Node* node6 , Node* node7 , Node* node8 , RegManagment& regManagment , CodeBuffer& codeBuffer){
     symTable.StopEnteringFuncParas();
     TypeNameEnum type = (dynamic_cast<Type*>(node1))->name;
     std::string name = (dynamic_cast<IdVal*>(node2))->GetVal();
@@ -818,7 +827,7 @@ void addFunction(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3
         output::errorDef(yylineno,name);
         exit(0);
     }
-    int num = (node7 != NULL) ? (dynamic_cast<PreCondListObj*>(node7))->GetNumCond() : 0;
+    int num = (node8 != NULL) ? (dynamic_cast<PreCondListObj*>(node8))->GetNumCond() : 0;
     std::list<TypeNameEnum> typesList = (dynamic_cast<ParaListObj*>(node5))->GetParaList();
     //typesList.reverse();
     if(name=="main"){
@@ -826,7 +835,7 @@ void addFunction(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node3
             symTable.FoundMainFunc();
         }
     }
-    PreCondListObj* paraListObj = dynamic_cast<PreCondListObj*>(node7);
+    PreCondListObj* paraListObj = dynamic_cast<PreCondListObj*>(node8);
     FuncDeclToBuffer(symTable,name,codeBuffer,regManagment,paraListObj);
     symTable.AddFuncSymbol(name,0,TYPE_FUNC,typesList,type,num);
 }
@@ -938,14 +947,18 @@ NonTermBool* RelopCmdToBuffer(WorkReg left , opTypeEnum op , WorkReg right, RegM
 
 //====== Function decleration Related Functions ==============
 
-void FuncDeclToBuffer(SymbolTable& symTable , std::string funcName , CodeBuffer& codeBuffer ,
- RegManagment& regManagment , PreCondListObj* paraListObj){
+void FuncLabelToBuffer(Node * node2 , CodeBuffer& codeBuffer){
+    std::string funcName = (dynamic_cast<IdVal*>(node2))->GetVal();
     if(funcName != "main"){
 		codeBuffer.emit("func_" + funcName + ": ");
 	}
 	else{
 		codeBuffer.emit(funcName + ": ");
 	}
+}
+
+void FuncDeclToBuffer(SymbolTable& symTable , std::string funcName , CodeBuffer& codeBuffer ,
+ RegManagment& regManagment , PreCondListObj* paraListObj){
 	codeBuffer.emit("move $fp, $sp");
     if(paraListObj != NULL){
         //_FalseLabel_:

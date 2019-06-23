@@ -73,9 +73,10 @@ FuncDecl :
                 {CallToEnterFunctionScope(globalSymbolTable);}
     LPAREN
         Formals 
-    RPAREN 
+    RPAREN      
+                {FuncLabelToBuffer($2,codeBuffer);}
         PreConditions 
-                {addFunction(globalSymbolTable,$1,$2,$3,$4,$5,$6,$7,regManagment,codeBuffer);}
+                {addFunction(globalSymbolTable,$1,$2,$3,$4,$5,$6,$7,$8,regManagment,codeBuffer);}
       LBRACE
         Statements 
       RBRACE 
