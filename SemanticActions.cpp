@@ -3,20 +3,7 @@
 #include <stdlib.h> 
 #include "RegManagment.h"
 
-void FuncEndToBuffer(SymbolTable& symTable , Node * node2 , CodeBuffer& codeBuffer){
-    std::string name = (dynamic_cast<IdVal*>(node2))->GetVal();
-    if(name=="main"){
-        codeBuffer.emit("li $v0, 10");
-		codeBuffer.emit("syscall");
-    }
-    else {
-        int offset = (symTable.GetCurrentFunction()->GetParametersList().size() * 4);
-        std::stringstream toStr;
-        toStr << offset;
-        codeBuffer.emit("lw $ra , "+toStr.str()+"($fp)");
-        codeBuffer.emit("jr $ra");
-    }
-}
+
 
 // RetType -> TYPE 
 
@@ -300,7 +287,7 @@ Node* StatmentAction10(SymbolTable& symTable, CodeBuffer& codeBuffer){
     int offset = (symTable.GetCurrentFunction()->GetParametersList().size() * 4);
     std::stringstream toStr;
     toStr << offset;
-    codeBuffer.emit("lw $ra , "+toStr.str()+"($fp)");
+    //codeBuffer.emit("lw $ra , "+toStr.str()+"($fp)");
     codeBuffer.emit("jr $ra");
     return new NonTermStatments();
 }
@@ -322,7 +309,7 @@ Node* StatmentAction11(SymbolTable& symTable , Node * node1 , Node * node2, RegM
     int offset = (symTable.GetCurrentFunction()->GetParametersList().size() * 4);
     std::stringstream toStr;
     toStr << offset;
-    codeBuffer.emit("lw $ra , "+toStr.str()+"($fp)");
+    //codeBuffer.emit("lw $ra , "+toStr.str()+"($fp)");
     codeBuffer.emit("jr $ra");
     return new NonTermStatments();
 }
@@ -956,7 +943,7 @@ void FuncDeclToBuffer(SymbolTable& symTable , std::string funcName , CodeBuffer&
         int offset = (symTable.GetCurrentFunction()->GetParametersList().size() * 4);
         std::stringstream toStr;
         toStr << offset;
-         codeBuffer.emit("sw $ra , "+toStr.str()+"($fp)");
+        //codeBuffer.emit("sw $ra , "+toStr.str()+"($fp)");
     }
 }
 
@@ -1097,4 +1084,29 @@ WorkReg AssignBoolVarToExpFromList(NonTermBool* nonTermBool, RegManagment& regMa
     // _EndLabel_:
 	codeBuffer.bpatch(codeBuffer.makelist(JumpToEnd), codeBuffer.genLabel());
     return reg;
+}
+
+void FuncEndToBuffer(SymbolTable& symTable , Node * node2 , CodeBuffer& codeBuffer){
+    std::string name = (dynamic_cast<IdVal*>(node2))->GetVal();
+    codeBuffer.emit("jr $ra");
+}
+
+void PrintErrorMsToBuffer(std::string MsgLabelStr , std::string errorMsgStr , RegManagment& regManagment , CodeBuffer& codeBuffer){
+    WorkReg reg = regManagment.AllocateReg();
+    codeBuffer.emitData(MsgLabelStr + ": .asciiz" + errorMsgStr);
+    codeBuffer.emit("subu $sp, $sp, 4");
+    codeBuffer.emit("sw $fp, 0($sp)");
+    codeBuffer.emit("subu $sp, $sp, 4");
+    codeBuffer.emit("sw $ra, 0($sp)");
+     codeBuffer.emit("subu $sp, $sp , 4");
+    codeBuffer.emit("la $" + WorkRegEnumToStr(reg) + " , " + MsgLabelStr);
+    codeBuffer.emit("sw $" + WorkRegEnumToStr(reg) + " , 0($sp) ");
+    codeBuffer.emit("jal print");
+	codeBuffer.emit("addu $sp, $sp, 4");
+    codeBuffer.emit("lw $ra, 0($sp)");
+    codeBuffer.emit("lw $fp, 4($sp)");
+    codeBuffer.emit("addu $sp, $sp, 8");
+    codeBuffer.emit("li $v0, 10");
+	codeBuffer.emit("syscall");
+    regManagment.FreeReg(reg);
 }

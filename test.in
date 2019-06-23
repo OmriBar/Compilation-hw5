@@ -4,6 +4,12 @@ int fib(byte n) {
 }
 
 void main() {
-    byte i = 5b;
-    printi(fib(i));
+    byte i = 0b;
+    while (i < 10) {
+        printi(fib(i));
+        if (i+1 < 10)
+            print("\t");
+        i = i + 1b;
+    }
+    print("\n");
 }

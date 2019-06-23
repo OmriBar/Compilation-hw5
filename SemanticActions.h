@@ -183,4 +183,6 @@ WorkReg AssignBoolVarToExpFromList(NonTermBool* nonTermBool, RegManagment& regMa
 
 void FuncEndToBuffer(SymbolTable& symTable , Node * node2 , CodeBuffer& codeBuffer);
 
+void PrintErrorMsToBuffer(std::string MsgLabelStr , std::string errorMsgStr , RegManagment& regManagment , CodeBuffer& codeBuffer);
+
 #endif
