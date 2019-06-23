@@ -108,11 +108,11 @@ PreCondition :
 	PRECOND LPAREN Exp RPAREN { $$ = PreConditionAction1($1,$2,$3,$4,codeBuffer);}
 ;
 Statements : 
-    Statement | Statements Statement // dont need to do anything right now
+    Statement { $$ = StatementsAction1($1); } | Statements Statement { $$ = StatementsAction2($1,$2,codeBuffer); } // dont need to do anything right now
 ;
 Statement : 
     COMMENT                                                                                                                                                         |
-    LBRACE {CallToEnterInnerScope(globalSymbolTable);} Statements {CallToExitInnerScope(globalSymbolTable);} RBRACE { $$ = StatmentAction1($1);}                    | 
+    LBRACE {CallToEnterInnerScope(globalSymbolTable);} Statements {CallToExitInnerScope(globalSymbolTable);} RBRACE { $$ = StatmentAction1($3);}                    | 
     Type ID SC               {$$ = StatmentAction2(globalSymbolTable,$1,$2,$3,regManagment,codeBuffer);}                                                                 | 
     Type ID ASSIGN Exp SC    {$$ = StatmentAction3(globalSymbolTable ,$1,$2,$3,$4,$5,regManagment,codeBuffer);}                                                          | 
     ID ASSIGN Exp SC         {$$ = StatmentAction4(globalSymbolTable,$1,$2,$3,$4,regManagment,codeBuffer);}                                                              | 

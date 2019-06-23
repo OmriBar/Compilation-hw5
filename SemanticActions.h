@@ -35,6 +35,10 @@ Node* PreConditionsAction1();
 Node* PreConditionsAction2(Node* node1 , Node* node2, Node* node3 , CodeBuffer& codeBuffer);
 // PreCondition -> PRECOND LPAREN Exp RPAREN
 Node* PreConditionAction1(Node* node1 , Node* node2 , Node* node3 , Node* node4 , CodeBuffer& codeBuffer);
+//Statements -> Statment
+Node * StatementsAction1(Node* node1);
+//Statements -> Statements Statement
+Node* StatementsAction2(Node* node1 , Node* node2 , CodeBuffer& codeBuffer);
 // Statment -> LBRACE <MARKER> Statements <MARKER> RBRACE
 Node* StatmentAction1(Node * node);
 // Statment -> Type ID SC
@@ -189,5 +193,7 @@ void PrintErrorMsToBuffer(std::string MsgLabelStr , RegManagment& regManagment ,
 void PrintDataToBuffer(CodeBuffer& codeBuffer);
 
 void FuncLabelToBuffer(Node* node2 , CodeBuffer& codeBuffer);
+
+void ReturnBool(NonTermBool* nonTermBool, RegManagment& regManagment , CodeBuffer& codeBuffer);
 
 #endif

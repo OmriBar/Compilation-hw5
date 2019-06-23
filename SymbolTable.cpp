@@ -100,6 +100,7 @@ std::list<Symbol*> SymbolTable::GetCurrentScope(){
 
 int SymbolTable::GetNCurrIndexInMem(){
     if(IsEnteringFuncParas){
+        //std::cout << "index : " << (-1)*((ScopesList.back().size())*4) << std::endl;
         return (-1)*(ScopesList.back().size());
     }
     else{
@@ -110,9 +111,11 @@ int SymbolTable::GetNCurrIndexInMem(){
         it != ScopesList.end() ; it++){
             numOfVars += (*it).size();
         }
-        int numPara = dynamic_cast<FunctionSymbol*>(ScopesList.front().front())->GetParametersList().size();
+        int numPara = dynamic_cast<FunctionSymbol*>(ScopesList.front().back())->GetParametersList().size();
+        int lala = ScopesList.front().size()+numPara;
         numOfVars -= ScopesList.front().size()+numPara;
-        return numOfVars;
+        //std::cout << "index : " << (numOfVars+1)*4 << std::endl;
+        return numOfVars+1;
         //std::cout<<std::endl << ScopesList.front().size() << std::endl;
     }
 

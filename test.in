@@ -1,15 +1,30 @@
-int fib(byte n) {
-    if (n == 0 or n == 1) return 1;
-    return fib(n-1b) + fib(n-2b);
-}
-
+//var, var to var
 void main() {
-    byte i = 0b;
-    while (i < 10) {
-        printi(fib(i));
-        if (i+1 < 10)
-            print("\t");
-        i = i + 1b;
-    }
-    print("\n");
+	byte a = 55b;
+	byte c = a;
+	a = 2b;
+	printi(a);
+	print("\n");
+	printi(c);
+	print("\n");
+	
+	int d = 101;
+	int e = d;
+	d = 1051;
+	printi(d);
+	print("\n");
+	printi(e);
+	print("\n");
+	
+	bool f = true;
+	bool g = f;
+	f = false;
+	if (f) print("true"); else print("false");
+	if (g) print("true"); else print("false");
+	
+	printi(a);
+	printi(c);
+	printi(d);
+	printi(e);
+	print("\n");
 }

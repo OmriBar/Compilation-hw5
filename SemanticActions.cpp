@@ -192,7 +192,7 @@ Node* StatmentAction4(SymbolTable& symTable , Node* node1 , Node* node2, Node* n
         //yyerror("error!");
     }
     WorkReg reg = (dynamic_cast<DataObj*>(node3))->getWorkReg();
-    int varOffset = sym->GetIndex() * 4;
+    int varOffset = -(sym->GetIndex() * 4);
     if(type==TYPE_BOOL){
         NonTermBool* nonTermBool = (dynamic_cast<NonTermBool*>(node3));
         AssignBoolVarToBuffer(nonTermBool,varOffset,regManagment,codeBuffer);
@@ -224,7 +224,9 @@ Node* StatmentAction5(Node* node1 , RegManagment& regManagment , CodeBuffer& cod
 
 Node* StatmentAction6(Node* node1 , Node* node2, Node* node3, Node* node4 , Node* node5
  , RegManagment& regManagment , CodeBuffer& codeBuffer){
+    NonTermStatments* nonTermStatments2 = dynamic_cast<NonTermStatments*>(node5);
     NonTermIfSuffix* nonTermIfSuffix = dynamic_cast<NonTermIfSuffix*>(node1);
+    NonTermStatments* nonTermStatments1= nonTermIfSuffix->GetStatments();
     NonTermBool* nonTermBool = nonTermIfSuffix->GetNonTermBool();
     int JumpToEndPos = nonTermIfSuffix->GetJumpToEndPos();
     std::string label1 = nonTermIfSuffix->GetLabel();
@@ -233,7 +235,9 @@ Node* StatmentAction6(Node* node1 , Node* node2, Node* node3, Node* node4 , Node
     codeBuffer.bpatch(nonTermBool->GetFalseList(),label2);
     std::string label3 = codeBuffer.genLabel();
     codeBuffer.bpatch(codeBuffer.makelist(JumpToEndPos),label3);
-    return new NonTermStatments();
+    std::vector<int> breakList = codeBuffer.merge(nonTermStatments1->GetBreakList(),nonTermStatments2->GetBreakList());
+    std::vector<int> continueList = codeBuffer.merge(nonTermStatments1->GetContinueList(),nonTermStatments2->GetContinueList());
+    return new NonTermStatments(breakList,continueList);
 } 
  
 // Statment -> WHILE LPAREN <MARKER> M Exp <MARKER> RPAREN M Statement
@@ -250,6 +254,9 @@ Node* StatmentAction7(Node* node1 , Node* node2, Node* node3, Node* node4 , Node
     std::string label4 = codeBuffer.genLabel();
     codeBuffer.bpatch(boolExp->GetTrueList(),label2);
     codeBuffer.bpatch(boolExp->GetFalseList(),label4);
+    codeBuffer.bpatch(nonTermStatments->GetBreakList(),label4);
+    codeBuffer.bpatch(nonTermStatments->GetContinueList(),label1);
+    return new NonTermStatments();
     /*
     label1:
         <Caculating Bolean Exp of while>
@@ -302,7 +309,7 @@ Node* StatmentAction10(SymbolTable& symTable, CodeBuffer& codeBuffer){
     int offset = (symTable.GetCurrentFunction()->GetParametersList().size() * 4);
     std::stringstream toStr;
     toStr << offset;
-    //codeBuffer.emit("lw $ra , "+toStr.str()+"($fp)");
+    codeBuffer.emit("move $sp , $fp");
     codeBuffer.emit("jr $ra");
     return new NonTermStatments();
 }
@@ -319,13 +326,16 @@ Node* StatmentAction11(SymbolTable& symTable , Node * node1 , Node * node2, RegM
         exit(0);
     }
     DataObj * dataObj1 = dynamic_cast<DataObj*>(node2);
-    codeBuffer.emit("move $v0, $"+ WorkRegEnumToStr(dataObj1->getWorkReg()));
-    dataObj1->freeWorkReg(regManagment);
-    int offset = (symTable.GetCurrentFunction()->GetParametersList().size() * 4);
-    std::stringstream toStr;
-    toStr << offset;
-    //codeBuffer.emit("lw $ra , "+toStr.str()+"($fp)");
-    codeBuffer.emit("jr $ra");
+    if(currtype == TYPE_BOOL){
+        NonTermBool* nonTermBool = dynamic_cast<NonTermBool*>(node2);
+        ReturnBool(nonTermBool,  regManagment ,codeBuffer);
+    }
+    else{
+        codeBuffer.emit("move $v0, $"+ WorkRegEnumToStr(dataObj1->getWorkReg()));
+        dataObj1->freeWorkReg(regManagment);
+        codeBuffer.emit("move $sp , $fp");
+        codeBuffer.emit("jr $ra");
+    }
     return new NonTermStatments();
 }
 
@@ -531,6 +541,7 @@ Node* CallAction2(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node
     
 }
 
+
 // Type -> INT
 
 Node* TypeAction1(){
@@ -552,13 +563,14 @@ Node* TypeAction3(){
 // Exp -> LPAREN Exp RPAREN
 
 Node* ExpAction1(Node* node1 , Node* node2 , Node* node3 , RegManagment& regManagment, CodeBuffer& codeBuffer) {
-    TypeNameEnum type = ExpToTypeName(node2);
+    /* TypeNameEnum type = ExpToTypeName(node2);
     if(type != TYPE_BOOL){
             output::errorMismatch(yylineno);
             exit(0);
         }
     DataObj * dataObj = dynamic_cast<DataObj*>(node2);
-    return TypeNameToExp(TYPE_BOOL,dataObj->getWorkReg());
+    return TypeNameToExp(TYPE_BOOL,dataObj->getWorkReg());*/
+    return node2;
 }
 
 // Exp -> Exp BINOP Exp
@@ -576,10 +588,12 @@ Node* ExpAction2(Node* node1 , Node* node2 , Node* node3 , RegManagment& regMana
     dataObj1->freeWorkReg(regManagment);
     dataObj3->freeWorkReg(regManagment);
     WorkReg resReg = regManagment.AllocateReg();
-
+    bool IsTheResByte = (dynamic_cast<NonTermByte*>(node1) != NULL) && (dynamic_cast<NonTermByte*>(node3) != NULL);
     opTypeEnum op = (dynamic_cast<BinaryOp*>(node2))->getType();
     BinopCmdToBuffer(dataObj1->getWorkReg(),op,dataObj3->getWorkReg(),resReg,regManagment,codeBuffer);
-
+    if(IsTheResByte){
+        codeBuffer.emit("and $"+WorkRegEnumToStr(resReg)+", $"+WorkRegEnumToStr(resReg)+", 0x000000ff");
+    }
     if(node1Type==TYPE_INT || node2Type==TYPE_INT ){
         return TypeNameToExp(TYPE_INT,resReg);
     }
@@ -601,7 +615,7 @@ Node* ExpAction3(SymbolTable& symTable , Node* node1 , RegManagment& regManagmen
         output::errorUndef(yylineno,name);
         exit(0);
     }
-    int offset = sym->GetIndex() * 4;
+    int offset = -(sym->GetIndex() * 4);
     std::stringstream toStr;
     toStr << offset;
     WorkReg reg = regManagment.AllocateReg();
@@ -955,11 +969,12 @@ void FuncLabelToBuffer(Node * node2 , CodeBuffer& codeBuffer){
 	else{
 		codeBuffer.emit(funcName + ": ");
 	}
+    codeBuffer.emit("move $fp, $sp");
 }
 
 void FuncDeclToBuffer(SymbolTable& symTable , std::string funcName , CodeBuffer& codeBuffer ,
  RegManagment& regManagment , PreCondListObj* paraListObj){
-	codeBuffer.emit("move $fp, $sp");
+	
     if(paraListObj != NULL){
         //_FalseLabel_:
         codeBuffer.bpatch(paraListObj->GetFalseList(),codeBuffer.genLabel());
@@ -1121,6 +1136,7 @@ WorkReg AssignBoolVarToExpFromList(NonTermBool* nonTermBool, RegManagment& regMa
 
 void FuncEndToBuffer(SymbolTable& symTable , Node * node2 , CodeBuffer& codeBuffer){
     std::string name = (dynamic_cast<IdVal*>(node2))->GetVal();
+    codeBuffer.emit("move $sp , $fp");
     codeBuffer.emit("jr $ra");
 }
 
@@ -1143,4 +1159,21 @@ void PrintErrorMsToBuffer(std::string MsgLabelStr , RegManagment& regManagment ,
 
 void PrintDataToBuffer(CodeBuffer& codeBuffer){
     codeBuffer.emitData("preCondError: .asciiz \"Precondition hasn't been satisfied for function \"");
+}
+
+void ReturnBool(NonTermBool* nonTermBool, RegManagment& regManagment , CodeBuffer& codeBuffer) {
+    //_TrueLabel_:
+    codeBuffer.bpatch(nonTermBool->GetTrueList(),codeBuffer.genLabel());
+    //          li $<tempReg>, 1
+    codeBuffer.emit("li $v0, 1");
+    //          j _EndLabel_
+    int JumpToEnd = codeBuffer.emit("j ");
+    // _FalseLabel_:
+	codeBuffer.bpatch(nonTermBool->GetFalseList(), codeBuffer.genLabel());
+    //          li $<TempReg>, 0
+	codeBuffer.emit("li $v0, 0");
+    // _EndLabel_:
+	codeBuffer.bpatch(codeBuffer.makelist(JumpToEnd), codeBuffer.genLabel());
+    codeBuffer.emit("move $sp , $fp");
+    codeBuffer.emit("jr $ra");
 }
