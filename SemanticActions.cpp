@@ -965,6 +965,10 @@ void FuncDeclToBuffer(SymbolTable& symTable , std::string funcName , CodeBuffer&
         codeBuffer.bpatch(paraListObj->GetFalseList(),codeBuffer.genLabel());
         //          li $<tempReg>, 1
         PrintErrorMsToBuffer("preCondError",regManagment,codeBuffer);
+        codeBuffer.emitData("funcName_"+funcName+": .asciiz \""+funcName+"\"");
+        callPrintToBuffer("funcName_"+funcName,regManagment,codeBuffer);
+        codeBuffer.emit("li $v0, 10");
+	    codeBuffer.emit("syscall");
         // _TrueLabel_:
 	    codeBuffer.bpatch(paraListObj->GetTrueList(), codeBuffer.genLabel());
     }
@@ -1134,11 +1138,9 @@ void PrintErrorMsToBuffer(std::string MsgLabelStr , RegManagment& regManagment ,
     codeBuffer.emit("lw $ra, 0($sp)");
     codeBuffer.emit("lw $fp, 4($sp)");
     codeBuffer.emit("addu $sp, $sp, 8");
-    codeBuffer.emit("li $v0, 10");
-	codeBuffer.emit("syscall");
     regManagment.FreeReg(reg);
 }
 
 void PrintDataToBuffer(CodeBuffer& codeBuffer){
-    codeBuffer.emitData("preCondError: .asciiz \"not setisfies conditions\"");
+    codeBuffer.emitData("preCondError: .asciiz \"Precondition hasn't been satisfied for function \"");
 }
