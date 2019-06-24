@@ -101,6 +101,10 @@ Node * StatementsAction1(Node* node1){
     return node1;
 }
 
+Node * CommentAction() {
+    return new NonTermStatments();
+}
+
 // Statment -> LBRACE <MARKER> Statements <MARKER> RBRACE
 Node* StatmentAction1(SymbolTable& symTable , Node* node1 , Node* node2, Node* node3
  , Node* node4 , Node* node5 , RegManagment& regManagment , CodeBuffer& codeBuffer){

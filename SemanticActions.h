@@ -39,6 +39,8 @@ Node* PreConditionAction1(Node* node1 , Node* node2 , Node* node3 , Node* node4 
 Node * StatementsAction1(Node* node1);
 //Statements -> Statements Statement
 Node* StatementsAction2(Node* node1 , Node* node2 , CodeBuffer& codeBuffer);
+// Statment -> COMMENT
+Node * CommentAction();
 // Statment -> LBRACE <MARKER> Statements <MARKER> RBRACE
 Node* StatmentAction1(Node * node);
 // Statment -> Type ID SC

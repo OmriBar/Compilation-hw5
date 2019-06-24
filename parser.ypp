@@ -112,7 +112,7 @@ Statements :
     Statement { $$ = StatementsAction1($1); } | Statements Statement { $$ = StatementsAction2($1,$2,codeBuffer); } // dont need to do anything right now
 ;
 Statement : 
-    COMMENT                                                                                                                                                         |
+    COMMENT    { $$ = CommentAction();}                                                                                                                        |
     LBRACE {CallToEnterInnerScope(globalSymbolTable);} Statements {ExitScopeStack(globalSymbolTable,codeBuffer);CallToExitInnerScope(globalSymbolTable);} RBRACE { $$ = StatmentAction1($3);}                    | 
     Type ID SC               {$$ = StatmentAction2(globalSymbolTable,$1,$2,$3,regManagment,codeBuffer);}                                                                 | 
     Type ID ASSIGN Exp SC    {$$ = StatmentAction3(globalSymbolTable ,$1,$2,$3,$4,$5,regManagment,codeBuffer);}                                                          | 
@@ -132,7 +132,7 @@ Statement :
 ;
 
 IF_SUFFIX : IF LPAREN {CallToEnterInnerScope(globalSymbolTable);} Exp {checkIfBoolInWhileIf($4);} RPAREN M Statement 
-    {CallToExitInnerScope(globalSymbolTable); $$=IfActionAction($1,$2,$3,$4,$5,$6,$7,$8,regManagment,codeBuffer);} // solves a reduce-reduce conflict!
+    {ExitScopeStack(globalSymbolTable,codeBuffer); CallToExitInnerScope(globalSymbolTable); $$=IfActionAction($1,$2,$3,$4,$5,$6,$7,$8,regManagment,codeBuffer);} // solves a reduce-reduce conflict!
 ;
 
 Call : 
