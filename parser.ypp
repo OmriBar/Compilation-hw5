@@ -138,9 +138,15 @@ Call :
     ID LPAREN RPAREN         { $$ = CallAction2(globalSymbolTable,$1,$2,$3,regManagment,codeBuffer);    }
 ;
 ExpList :
-    Exp COMMA ExpList { $$ = ExpListAction1($1,$2,$3);}                        | 
+    LALA  ExpList { $$ = ExpListAction1($1,$2,$2,regManagment,codeBuffer);}                        | 
     Exp               { $$ = ExpListAction2($1,regManagment,codeBuffer);}
 ;
+
+LALA :
+    Exp COMMA { $$ = check($1, regManagment,codeBuffer);}
+;
+
+
 Type :
     INT     { $$ = TypeAction1();}  |
     BYTE    { $$ = TypeAction2(); } |

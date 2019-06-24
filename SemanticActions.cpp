@@ -193,16 +193,16 @@ Node* StatmentAction4(SymbolTable& symTable , Node* node1 , Node* node2, Node* n
     }
     WorkReg reg = (dynamic_cast<DataObj*>(node3))->getWorkReg();
     int varOffset = -(sym->GetIndex() * 4);
-    if(type==TYPE_BOOL){
+    if(type==TYPE_BOOL){        
         NonTermBool* nonTermBool = (dynamic_cast<NonTermBool*>(node3));
         AssignBoolVarToBuffer(nonTermBool,varOffset,regManagment,codeBuffer);
     }
     else{
         AssignNonBoolVarToBuffer(reg,varOffset,regManagment,codeBuffer);
+        regManagment.FreeReg(reg);
     }
-    regManagment.FreeReg(reg);
     return new NonTermStatments();
-}
+} // To Observe Later
 
 //Statment -> IF_SUFFIX
 
@@ -217,7 +217,7 @@ Node* StatmentAction5(Node* node1 , RegManagment& regManagment , CodeBuffer& cod
     codeBuffer.bpatch(nonTermBool->GetFalseList(),label2);
     std::string label3 = codeBuffer.genLabel();
     codeBuffer.bpatch(codeBuffer.makelist(JumpToEndPos),label3);
-    return new NonTermStatments();
+    return statments;
 }
 
 //Statment -> IF_SUFFIX ELSE <Marker> M Statement
@@ -364,10 +364,35 @@ Node* IfActionAction(Node * node1 , Node * node2 , Node * node3 , Node * node4 ,
     return new NonTermIfSuffix(nonTermMMarker->GetLabel(),boolExp,statments,JumpToEndPos);
 }
 
-//ExpList -> Exp COMMA ExpList 
 
-Node* ExpListAction1(Node* node1 , Node* node2 , Node* node3) {
+
+
+Node* check(Node* node1,RegManagment& regManagment, CodeBuffer& codeBuffer ){
+    TypeNameEnum type = ExpToTypeName(node1);
+    if(type == TYPE_BOOL){
+        if((dynamic_cast<DataObj*>(node1))->getWorkReg() != NONE){
+            (dynamic_cast<DataObj*>(node1))->freeWorkReg(regManagment);
+        }
+        NonTermBool* nonTermBool = dynamic_cast<NonTermBool*>(node1);
+        WorkReg reg = AssignBoolVarToExpFromList(nonTermBool,regManagment,codeBuffer);
+        Node* newNonTermBool = TypeNameToExp(TYPE_BOOL,reg);
+        return newNonTermBool;
+    }
+    return node1;
+}
+
+//ExpList -> Exp COMMA ExpList 
+Node* ExpListAction1(Node* node1 , Node* node2 , Node* node3 , RegManagment& regManagment, CodeBuffer& codeBuffer) {
+        TypeNameEnum type = ExpToTypeName(node1);
+    //if(type != TYPE_BOOL){
         return new ExpListObj(dynamic_cast<ExpListObj*>(node3),dynamic_cast<DataObj*>(node1));
+    //}
+    //else {
+       // NonTermBool* nonTermBool = dynamic_cast<NonTermBool*>(node1);
+       //WorkReg reg = AssignBoolVarToExpFromList(nonTermBool,regManagment,codeBuffer);
+        //Node* newNonTermBool = TypeNameToExp(TYPE_BOOL,reg);
+       //return new ExpListObj(dynamic_cast<ExpListObj*>(node3),dynamic_cast<DataObj*>(newNonTermBool));
+    //}
 } 
 
 //ExpList -> Exp
@@ -625,8 +650,10 @@ Node* ExpAction3(SymbolTable& symTable , Node* node1 , RegManagment& regManagmen
         int trueListPos = codeBuffer.emit("j ");
         std::vector<int> falseList = codeBuffer.makelist(falseListPos);
         std::vector<int> trueList = codeBuffer.makelist(trueListPos);
-        regManagment.FreeReg(reg);
         return new NonTermBool(trueList,falseList);
+    }
+    else{
+
     }
     return TypeNameToExp(sym->GetType(),reg);
 }
