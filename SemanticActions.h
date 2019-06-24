@@ -57,6 +57,7 @@ Node* StatmentAction6(Node* node1 , Node* node2, Node* node3, Node* node4 , Node
 // Statment -> WHILE LPAREN <MARKER> M Exp <MARKER> RPAREN M Statement
 Node* StatmentAction7(Node* node1 , Node* node2, Node* node3, Node* node4 , Node* node5 
 , Node* node6 , Node* node7 , Node* node8 , Node* node9 , RegManagment& regManagment , CodeBuffer& codeBuffer);
+void ExitScopeStack(SymbolTable& symTable , CodeBuffer& codeBuffer);
 //Statment -> BREAK SC
 Node* StatmentAction8(int in_while_flag , CodeBuffer& codeBuffer);
 //Statment -> CONTINUE SC

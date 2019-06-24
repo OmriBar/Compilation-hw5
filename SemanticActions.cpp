@@ -158,9 +158,6 @@ Node* StatmentAction3(SymbolTable& symTable , Node* node1 , Node* node2, Node* n
         exit(0);
     }
     TypeNameEnum type = TypeNameToTypeEnum(node1);
-    //std::stringstream toStr;
-    //toStr << "the offset is " << (symTable.getCurrentIndex() + 1) * 4 << std::endl;
-    //codeBuffer.emit(toStr.str());
     symTable.AddVariableSymbol(name , symTable.getCurrentIndex()+1 ,type);
     if(type==TYPE_BOOL){
         NonTermBool* nonTermBool = (dynamic_cast<NonTermBool*>(node4));
@@ -268,6 +265,14 @@ Node* StatmentAction7(Node* node1 , Node* node2, Node* node3, Node* node4 , Node
      */
 
 
+}
+
+void ExitScopeStack(SymbolTable& symTable , CodeBuffer& codeBuffer){
+    int offset = symTable.GetCurrentScope().size() * 4;
+    std::stringstream toStr;
+    toStr << offset;
+    //std::cout << "heyyyyyyyyyyyyyyyyyyyyyyyyyy" << std::endl;
+    codeBuffer.emit("addu $sp , $sp ,"+toStr.str());
 }
 
 //Statment -> BREAK SC 
@@ -947,6 +952,14 @@ void mainCheck(SymbolTable& symTable){
 //================================================= Buffer Related Functions ============================================================
 
 void BinopCmdToBuffer(WorkReg left , opTypeEnum op , WorkReg right , WorkReg res , RegManagment& regManagment , CodeBuffer& codeBuffer){
+    if(op == OP_DIV){
+        int JumpPoint = codeBuffer.emit("bne $"+WorkRegEnumToStr(right)+",0 ");
+        PrintErrorMsToBuffer("DivideZeroError",regManagment,codeBuffer);
+        codeBuffer.emit("li $v0, 10");
+	    codeBuffer.emit("syscall");
+        std::string JumpLabel = codeBuffer.genLabel();
+        codeBuffer.bpatch(codeBuffer.makelist(JumpPoint),JumpLabel);
+    }
     std::string opStr;
     switch(op){
         case OP_SUM : opStr="addu";break;
@@ -1186,6 +1199,7 @@ void PrintErrorMsToBuffer(std::string MsgLabelStr , RegManagment& regManagment ,
 
 void PrintDataToBuffer(CodeBuffer& codeBuffer){
     codeBuffer.emitData("preCondError: .asciiz \"Precondition hasn't been satisfied for function \"");
+    codeBuffer.emitData("DivideZeroError: .asciiz \"Error division by zero\n\"");
 }
 
 void ReturnBool(NonTermBool* nonTermBool, RegManagment& regManagment , CodeBuffer& codeBuffer) {

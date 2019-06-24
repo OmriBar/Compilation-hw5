@@ -37,7 +37,8 @@ continue          				{yylval = new CmdWord(CMD_CONTINUE); return CONTINUE;}
 \}          					{yylval = new ScopeVal(SCOPE_RBRACE); return RBRACE;}
 \=          					{yylval = new CmdWord(CMD_ASGN); return ASSIGN;}
 (\=\=|\!\=|<|>|<=|>=)           {yylval = new RelativeOp(yytext); return RELOP;}
-[\+\-\*\/]               		{yylval = new BinaryOp(yytext); return BINOP;}
+[\+\-]               			{yylval = new BinaryOp(yytext); return BINOP2;}
+[\*\/]               			{yylval = new BinaryOp(yytext); return BINOP1;}
 (0|[1-9][0-9]*) 				{yylval = new NumVal(yytext); return NUM;}
 [a-zA-Z][a-zA-Z0-9]*          	{yylval = new IdVal(yytext); return ID;}
 \"([^\n\r\"\\]|\\[rnt"\\])+\"   {yylval = new StrVal(yytext); return STRING;}

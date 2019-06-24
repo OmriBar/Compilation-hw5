@@ -31,8 +31,8 @@
 %token BYTE
 %token B
 %token BOOL
-%left AND
 %left OR
+%left AND
 %right NOT
 %token TRUE
 %token FALSE
@@ -52,7 +52,8 @@
 %right LBRACE RBRACE
 %left ASSIGN
 %nonassoc  RELOP
-%left  BINOP
+%left  BINOP2
+%left  BINOP1
 %token ID
 %token NUM
 %token STRING
@@ -112,15 +113,16 @@ Statements :
 ;
 Statement : 
     COMMENT                                                                                                                                                         |
-    LBRACE {CallToEnterInnerScope(globalSymbolTable);} Statements {CallToExitInnerScope(globalSymbolTable);} RBRACE { $$ = StatmentAction1($3);}                    | 
+    LBRACE {CallToEnterInnerScope(globalSymbolTable);} Statements {ExitScopeStack(globalSymbolTable,codeBuffer);CallToExitInnerScope(globalSymbolTable);} RBRACE { $$ = StatmentAction1($3);}                    | 
     Type ID SC               {$$ = StatmentAction2(globalSymbolTable,$1,$2,$3,regManagment,codeBuffer);}                                                                 | 
     Type ID ASSIGN Exp SC    {$$ = StatmentAction3(globalSymbolTable ,$1,$2,$3,$4,$5,regManagment,codeBuffer);}                                                          | 
     ID ASSIGN Exp SC         {$$ = StatmentAction4(globalSymbolTable,$1,$2,$3,$4,regManagment,codeBuffer);}                                                              | 
     IF_SUFFIX  %prec "then"  {$$ = StatmentAction5($1,regManagment,codeBuffer);}                                                                                                                                   |
-    IF_SUFFIX ELSE {CallToEnterInnerScope(globalSymbolTable);} M Statement {CallToExitInnerScope(globalSymbolTable);}         
+    IF_SUFFIX ELSE {CallToEnterInnerScope(globalSymbolTable);} M Statement {ExitScopeStack(globalSymbolTable,codeBuffer);CallToExitInnerScope(globalSymbolTable);}         
                              {$$ = StatmentAction6($1,$2,$3,$4,$5,regManagment,codeBuffer);}                                                                                                     |
     WHILE LPAREN {CallToEnterInnerScope(globalSymbolTable); EnterWhile(in_while_flag);} M Exp {checkIfBoolInWhileIf($5);} RPAREN M Statement 
-             {CallToExitInnerScope(globalSymbolTable);ExitWhile(in_while_flag);
+             {ExitScopeStack(globalSymbolTable,codeBuffer);
+             CallToExitInnerScope(globalSymbolTable);ExitWhile(in_while_flag);
              $$ = StatmentAction7($1,$2,$3,$4,$5,$6,$7,$8,$9,regManagment,codeBuffer);}                                                     |
     BREAK SC                 {$$ = StatmentAction8(in_while_flag,codeBuffer);}                                                                                                      |
     CONTINUE SC              {$$ = StatmentAction9(in_while_flag,codeBuffer);}                                                                                                      |
@@ -154,7 +156,8 @@ Type :
 ;
 Exp : 
     LPAREN Exp RPAREN   { $$ = ExpAction1($1,$2,$3,regManagment,codeBuffer);}                    |
-    Exp BINOP Exp       { $$ = ExpAction2($1,$2,$3,regManagment,codeBuffer);}                    |
+    Exp BINOP1 Exp       { $$ = ExpAction2($1,$2,$3,regManagment,codeBuffer);}                    |
+    Exp BINOP2 Exp       { $$ = ExpAction2($1,$2,$3,regManagment,codeBuffer);}                    |
     ID                  { $$ = ExpAction3(globalSymbolTable,$1,regManagment,codeBuffer);}        |
     Call                { $$ = ExpAction4($1,regManagment,codeBuffer); }                         |  
     NUM                 { $$ = ExpAction5($1,regManagment,codeBuffer); }                         |
