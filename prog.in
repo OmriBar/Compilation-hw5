@@ -1,7 +1,0 @@
-void main()
-{
-    printi(4+5);
-	print("hello\n");
-	print("goodbyte\n");
-	printi(2*6);
-}

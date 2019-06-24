@@ -1020,7 +1020,7 @@ void FuncDeclToBuffer(SymbolTable& symTable , std::string funcName , CodeBuffer&
         codeBuffer.bpatch(paraListObj->GetFalseList(),codeBuffer.genLabel());
         //          li $<tempReg>, 1
         PrintErrorMsToBuffer("preCondError",regManagment,codeBuffer);
-        codeBuffer.emitData("funcName_"+funcName+": .asciiz \""+funcName+"\"");
+        codeBuffer.emitData("funcName_"+funcName+": .asciiz \""+funcName+"\n\"");
         callPrintToBuffer("funcName_"+funcName,regManagment,codeBuffer);
         codeBuffer.emit("li $v0, 10");
 	    codeBuffer.emit("syscall");
