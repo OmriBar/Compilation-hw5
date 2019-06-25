@@ -356,6 +356,7 @@ std::string TypeToString(TypeNameEnum type);
 
 TypeNameEnum TypeNameToTypeEnum(Node * node);
 
+std::string NumToStr(int x);
 
 int yyerror(char const* message);
 

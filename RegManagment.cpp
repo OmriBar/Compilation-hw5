@@ -80,12 +80,3 @@ void RegManagment::printTaken() {
     }
      std::cout << "end list" << std::endl;
 }
-std::stringstream RegManagment::printFree(){
-    std::stringstream toStr;
-    toStr << "free : " << std::endl;
-    for(std::list<WorkReg>::iterator it = FreeRegList.begin() ; it != FreeRegList.end() ; it++){
-        toStr << WorkRegEnumToStr(*it) << std::endl;
-    }
-     toStr << "end list" << std::endl;
-     return toStr;
-}

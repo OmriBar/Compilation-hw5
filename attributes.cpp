@@ -78,3 +78,37 @@ int yyerror(char const* message)
     output::errorSyn(yylineno);
 	exit(0);
 }
+
+std::string NumToStr(int x) {
+
+    if (!x)
+        return "0";
+    bool IsNegative = x < 0 ? true : false;
+    int abs = x < 0 ? -x : x;
+    int absDup = abs;
+    int absLen = 0;
+    while(absDup){
+      absDup /= 10;
+      absLen ++;
+    }
+    std::string s = std::string(absLen,'0');
+    int index = 0;
+    while(abs) {
+        s[index++]=(abs%10 + '0');
+        abs /= 10;
+    }
+    int finalSize = IsNegative ? s.size()+1 : s.size();
+    std::string s2 = std::string(finalSize,'0');
+    int size = s.size();
+    for(int i=0 ; i<size ; i++){
+        s2[i] = s[size-1-i];
+    }
+    if(IsNegative){
+        size++;
+        for(int i= size-1 ; i>=0 ; i--){
+        s2[i] = s2[i-1];
+        }
+        s2[0]='-';
+    }
+    return s2;
+}

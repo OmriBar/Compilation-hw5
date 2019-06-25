@@ -28,7 +28,6 @@ class RegManagment {
         void FreeReg(WorkReg reg);
         std::list<WorkReg> GetCurrentTakenRegsList();
         void printTaken();
-        std::stringstream printFree();
 };
 
 #endif

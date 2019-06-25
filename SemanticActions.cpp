@@ -273,10 +273,8 @@ Node* StatmentAction7(Node* node1 , Node* node2, Node* node3, Node* node4 , Node
 
 void ExitScopeStack(SymbolTable& symTable , CodeBuffer& codeBuffer){
     int offset = symTable.GetCurrentScope().size() * 4;
-    std::stringstream toStr;
-    toStr << offset;
-    //std::cout << "heyyyyyyyyyyyyyyyyyyyyyyyyyy" << std::endl;
-    codeBuffer.emit("addu $sp , $sp ,"+toStr.str());
+    std::string numStr = NumToStr(offset);
+    codeBuffer.emit("addu $sp , $sp ,"+numStr);
 }
 
 //Statment -> BREAK SC 
@@ -315,9 +313,6 @@ Node* StatmentAction10(SymbolTable& symTable, CodeBuffer& codeBuffer){
         output::errorMismatch(yylineno);
         exit(0);
     }
-    int offset = (symTable.GetCurrentFunction()->GetParametersList().size() * 4);
-    std::stringstream toStr;
-    toStr << offset;
     codeBuffer.emit("move $sp , $fp");
     codeBuffer.emit("jr $ra");
     return new NonTermStatments();
@@ -502,9 +497,8 @@ Node* CallAction1(SymbolTable& symTable , Node* node1 , Node* node2 , Node* node
         ExpListObj* expListObj = dynamic_cast<ExpListObj*>(node3);
         //expListObj->freeAllocRegisters(regManagment);
         codeBuffer.emit("jal func_"+funcSym->GetName());
-        std::stringstream toStrSizeStack;
-        toStrSizeStack <<(expList.size()*4);   
-        codeBuffer.emit("addu $sp, $sp, " + toStrSizeStack.str());
+        std::string SizeStackStr = NumToStr((expList.size()*4));  
+        codeBuffer.emit("addu $sp, $sp, " + SizeStackStr);
         codeBuffer.emit("lw $ra, 0($sp)");
         codeBuffer.emit("lw $fp, 4($sp)");
         codeBuffer.emit("addu $sp, $sp, 8");
@@ -650,10 +644,9 @@ Node* ExpAction3(SymbolTable& symTable , Node* node1 , RegManagment& regManagmen
         exit(0);
     }
     int offset = -(sym->GetIndex() * 4);
-    std::stringstream toStr;
-    toStr << offset;
+    std::string offsetStr = NumToStr(-(sym->GetIndex() * 4));
     WorkReg reg = regManagment.AllocateReg();
-    codeBuffer.emit("lw $"+WorkRegEnumToStr(reg)+", "+ toStr.str() + "($fp)");
+    codeBuffer.emit("lw $"+WorkRegEnumToStr(reg)+", "+ offsetStr + "($fp)");
     if(sym->GetType() == TYPE_BOOL){
         int falseListPos = codeBuffer.emit("beq $"+WorkRegEnumToStr(reg)+", 0, ");
         int trueListPos = codeBuffer.emit("j ");
@@ -688,12 +681,8 @@ Node* ExpAction4(Node* node , RegManagment& regManagment, CodeBuffer& codeBuffer
 Node* ExpAction5(Node* node , RegManagment& regManagment, CodeBuffer& codeBuffer){
     //regManagment.printFree();
     std::string numberStr = (dynamic_cast<NumVal*>(node))->getStr();
-    std::stringstream command;
     WorkReg resReg = regManagment.AllocateReg();
-    command << "li ";
-    command << "$" << WorkRegEnumToStr(resReg) << ", ";
-    command << numberStr;
-    codeBuffer.emit(command.str());
+    codeBuffer.emit("li $"+WorkRegEnumToStr(resReg)+", "+numberStr);
     return new NonTermInt(node,resReg);
 }
 
@@ -707,12 +696,9 @@ Node* ExpAction6(Node* node1 , Node* node2 , RegManagment& regManagment, CodeBuf
             exit(0);
         }
     std::string numberStr = (dynamic_cast<NumVal*>(node1))->getStr();
-    std::stringstream command;
     WorkReg resReg = regManagment.AllocateReg();
-    command << "li ";
-    command << "$" << WorkRegEnumToStr(resReg) << ", ";
-    command << numberStr;
-    codeBuffer.emit(command.str());
+    std::string command =  "li $" + WorkRegEnumToStr(resReg) + ", " + numberStr;
+    codeBuffer.emit(command);
     DataObj* dataObj = dynamic_cast<DataObj*>(node1);
     return new NonTermByte(resReg);
 }
@@ -971,12 +957,8 @@ void BinopCmdToBuffer(WorkReg left , opTypeEnum op , WorkReg right , WorkReg res
         case OP_MUL : opStr="mul";break;
         case OP_DIV : opStr="div";break;
     }
-    std::stringstream command;
-    command << opStr;
-    command << " $" << WorkRegEnumToStr(res) << ",";
-    command << " $" << WorkRegEnumToStr(left) << ",";
-    command << " $" << WorkRegEnumToStr(right);
-    codeBuffer.emit(command.str());
+    std::string command =  opStr + " $" + WorkRegEnumToStr(res) + ", $" + WorkRegEnumToStr(left) + ", $" + WorkRegEnumToStr(right);
+    codeBuffer.emit(command);
 }
 NonTermBool* RelopCmdToBuffer(WorkReg left , opTypeEnum op , WorkReg right, RegManagment& regManagment , CodeBuffer& codeBuffer){
     int trueListAddr;
@@ -990,14 +972,10 @@ NonTermBool* RelopCmdToBuffer(WorkReg left , opTypeEnum op , WorkReg right, RegM
         case OP_RIGHTBIGEQ : opStr="ble"; break;
         case OP_RIGHTBIG : opStr="blt"; break;
     }
-    std::stringstream command1;
-    command1 << opStr;
-    command1 << " $" << WorkRegEnumToStr(left) << ",";
-    command1 << " $" << WorkRegEnumToStr(right) << ",";
-    std::stringstream command2;
-    command2 << "j ";
-    trueListAddr = codeBuffer.emit(command1.str());
-    falseListAddr = codeBuffer.emit(command2.str());
+    std::string command1 =  opStr + " $" + WorkRegEnumToStr(left) + ", $" + WorkRegEnumToStr(right) + ",";
+    std::string command2 = "j ";
+    trueListAddr = codeBuffer.emit(command1);
+    falseListAddr = codeBuffer.emit(command2);
     std::vector<int> trueList = codeBuffer.makelist(trueListAddr);
     std::vector<int> falseList = codeBuffer.makelist(falseListAddr);
     return new NonTermBool(trueList,falseList);
@@ -1031,12 +1009,6 @@ void FuncDeclToBuffer(SymbolTable& symTable , std::string funcName , CodeBuffer&
         // _TrueLabel_:
 	    codeBuffer.bpatch(paraListObj->GetTrueList(), codeBuffer.genLabel());
     }
-    if(funcName!= "main"){
-        int offset = (symTable.GetCurrentFunction()->GetParametersList().size() * 4);
-        std::stringstream toStr;
-        toStr << offset;
-        //codeBuffer.emit("sw $ra , "+toStr.str()+"($fp)");
-    }
 }
 
 void AddFuncPrintPrintiToBuffer(CodeBuffer& codeBuffer){
@@ -1055,13 +1027,10 @@ void AddFuncPrintPrintiToBuffer(CodeBuffer& codeBuffer){
 
 std::string SaveStringToData(std::string text  , RegManagment& regManagment , CodeBuffer& codeBuffer){
     static int stringCounter=0;
-    std::stringstream counterToStr;
-    counterToStr << (stringCounter++);
-    std::string stringCounterStr = counterToStr.str();
-    std::stringstream label;
-    label << "_strData" << (stringCounter++) << "_";
-    codeBuffer.emitData( label.str() + ": .asciiz " + text);
-    return label.str();
+    std::string stringCounterStr = NumToStr(stringCounter++);
+    std::string label = "_strData" + stringCounterStr + "_";
+    codeBuffer.emitData( label + ": .asciiz " + text);
+    return label;
 }
 
 WorkReg callPrintToBuffer(std::string label , RegManagment& regManagment , CodeBuffer& codeBuffer){
@@ -1115,9 +1084,9 @@ void AddVarToBuffer(RegManagment& regManagment , CodeBuffer& codeBuffer) {
 }
 
 void AssignNonBoolVarToBuffer(WorkReg reg , int varOffset , RegManagment& regManagment , CodeBuffer& codeBuffer) {
-    std::stringstream str;
-    str << "sw $" << WorkRegEnumToStr(reg) << ", " << varOffset << "($fp)";
-    codeBuffer.emit(str.str());
+    std::string offsetStr = NumToStr(varOffset);
+    std::string command = "sw $" + WorkRegEnumToStr(reg) + ", " + offsetStr + "($fp)";
+    codeBuffer.emit(command);
 }
 
 // Bool
@@ -1142,8 +1111,7 @@ void AddAndAssignBoolVarToBuffer(NonTermBool* nonTermBool , RegManagment& regMan
 }
 
 void AssignBoolVarToBuffer(NonTermBool* nonTermBool , int offset  , RegManagment& regManagment , CodeBuffer& codeBuffer) {
-    std::stringstream toStr;
-    toStr << offset;
+    std::string offsetStr = NumToStr(offset);
     WorkReg tempReg = regManagment.AllocateReg();
     //_TrueLabel_:
     codeBuffer.bpatch(nonTermBool->GetTrueList(),codeBuffer.genLabel());
@@ -1157,7 +1125,7 @@ void AssignBoolVarToBuffer(NonTermBool* nonTermBool , int offset  , RegManagment
 	codeBuffer.emit("li $" + WorkRegEnumToStr(tempReg) + ", 0");
     // _EndLabel_:
 	codeBuffer.bpatch(codeBuffer.makelist(JumpToEnd), codeBuffer.genLabel());
-	codeBuffer.emit("sw $" + WorkRegEnumToStr(tempReg) + ", " + toStr.str() + "($fp)");
+	codeBuffer.emit("sw $" + WorkRegEnumToStr(tempReg) + ", " + offsetStr + "($fp)");
     regManagment.FreeReg(tempReg);
 }
 
